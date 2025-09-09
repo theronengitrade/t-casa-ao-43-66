@@ -220,6 +220,22 @@ const FinancialPortal = () => {
     }
   };
 
+  const searchExistingCondominium = async (name: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('condominiums')
+        .select('id, name, address')
+        .ilike('name', `%${name}%`)
+        .limit(5);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error searching condominiums:', error);
+      return [];
+    }
+  };
+
   const addCondominium = async () => {
     if (!selectedCity || !newCondoData.name || !newCondoData.address) {
       toast({
@@ -228,6 +244,16 @@ const FinancialPortal = () => {
         variant: "destructive"
       });
       return;
+    }
+
+    // Verificar se já existe condomínio com nome similar
+    const existingCondos = await searchExistingCondominium(newCondoData.name);
+    if (existingCondos.length > 0) {
+      const condoNames = existingCondos.map(c => c.name).join(', ');
+      const confirmed = window.confirm(
+        `Encontrados condomínios similares: ${condoNames}. Deseja continuar mesmo assim?`
+      );
+      if (!confirmed) return;
     }
 
     try {
@@ -366,7 +392,7 @@ const FinancialPortal = () => {
     }
   };
 
-  const exportReport = async () => {
+  const exportReport = async (format: 'json' | 'csv' = 'json') => {
     if (!selectedCity) return;
 
     try {
@@ -383,21 +409,37 @@ const FinancialPortal = () => {
         }))
       };
 
-      const blob = new Blob([JSON.stringify(reportData, null, 2)], {
-        type: 'application/json'
-      });
+      let blob: Blob;
+      let filename: string;
+
+      if (format === 'csv') {
+        // Criar CSV
+        const csvHeader = 'Condomínio,Apartamentos,Taxa Mensal,Plano Pagamento\n';
+        const csvContent = reportData.condominiums
+          .map(c => `"${c.name}",${c.apartments},${c.monthly_fee},"${c.payment_plan}"`)
+          .join('\n');
+        
+        blob = new Blob([csvHeader + csvContent], { type: 'text/csv' });
+        filename = `relatorio-${selectedCity.name}-${selectedYear}.csv`;
+      } else {
+        // Manter JSON
+        blob = new Blob([JSON.stringify(reportData, null, 2)], {
+          type: 'application/json'
+        });
+        filename = `relatorio-${selectedCity.name}-${selectedYear}.json`;
+      }
       
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-${selectedCity.name}-${selectedYear}.json`;
+      a.download = filename;
       a.click();
       
       URL.revokeObjectURL(url);
       
       toast({
         title: "Sucesso",
-        description: "Relatório exportado com sucesso!"
+        description: `Relatório ${format.toUpperCase()} exportado com sucesso!`
       });
     } catch (error) {
       console.error('Error exporting report:', error);
@@ -438,10 +480,16 @@ const FinancialPortal = () => {
             </SelectContent>
           </Select>
           {selectedCity && (
-            <Button onClick={exportReport} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar Relatório
-            </Button>
+            <div className="flex space-x-2">
+              <Button onClick={() => exportReport('csv')} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                CSV
+              </Button>
+              <Button onClick={() => exportReport('json')} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                JSON
+              </Button>
+            </div>
           )}
         </div>
       </div>
