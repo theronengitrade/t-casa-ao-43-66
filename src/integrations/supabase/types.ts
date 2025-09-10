@@ -264,6 +264,124 @@ export type Database = {
           },
         ]
       }
+      business_clients: {
+        Row: {
+          address: string | null
+          apartment_count: number
+          city_id: string | null
+          contact_person: string | null
+          contract_start_date: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          monthly_fee_per_apartment: number
+          name: string
+          notes: string | null
+          payment_plan: string
+          phone: string | null
+          total_monthly_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          apartment_count?: number
+          city_id?: string | null
+          contact_person?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_fee_per_apartment?: number
+          name: string
+          notes?: string | null
+          payment_plan?: string
+          phone?: string | null
+          total_monthly_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          apartment_count?: number
+          city_id?: string | null
+          contact_person?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_fee_per_apartment?: number
+          name?: string
+          notes?: string | null
+          payment_plan?: string
+          phone?: string | null
+          total_monthly_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_clients_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_payments: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          notes: string | null
+          payment_date: string | null
+          status: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "business_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           country: string | null
