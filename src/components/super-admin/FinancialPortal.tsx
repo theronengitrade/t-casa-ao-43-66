@@ -48,6 +48,7 @@ interface Condominium {
 interface BusinessClient {
   id: string;
   name: string;
+  condominium_id?: string;
   apartment_count: number;
   monthly_fee_per_apartment: number;
   payment_plan: 'monthly' | 'biannual' | 'annual';
@@ -85,9 +86,16 @@ const FinancialPortal = () => {
   const [editingPayment, setEditingPayment] = useState<BusinessPayment | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [newClient, setNewClient] = useState<Partial<BusinessClient>>({
+    name: '',
+    condominium_id: '',
+    city_id: '',
     payment_plan: 'monthly',
     apartment_count: 0,
     monthly_fee_per_apartment: 0,
+    contact_person: '',
+    phone: '',
+    email: '',
+    notes: '',
     is_active: true
   });
   const [loading, setLoading] = useState(true);
@@ -108,10 +116,11 @@ const FinancialPortal = () => {
       
       if (citiesError) throw citiesError;
 
-      // Buscar condomínios
+      // Buscar condomínios (ordenados por nome)
       const { data: condominiumsData, error: condominiumsError } = await supabase
         .from('condominiums')
-        .select('id, name, apartment_count');
+        .select('id, name, apartment_count')
+        .order('name');
       
       if (condominiumsError) throw condominiumsError;
       
@@ -324,21 +333,27 @@ const FinancialPortal = () => {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="condominium">Nome do Condomínio *</Label>
-                      <Select value={newClient.name || ''} onValueChange={(value) => {
-                        const selectedCondo = condominiums.find(c => c.name === value);
-                        setNewClient({
-                          ...newClient, 
-                          name: value,
-                          apartment_count: selectedCondo?.apartment_count || 0
-                        });
+                      <Select value={newClient.condominium_id || ''} onValueChange={(value) => {
+                        const selectedCondo = condominiums.find(c => c.id === value);
+                        if (selectedCondo) {
+                          setNewClient({
+                            ...newClient, 
+                            condominium_id: selectedCondo.id,
+                            name: selectedCondo.name,
+                            apartment_count: selectedCondo.apartment_count || 0
+                          });
+                        }
                       }}>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Selecione o condomínio" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-background border z-50">
                           {condominiums.map(condo => (
-                            <SelectItem key={condo.id} value={condo.name}>
-                              {condo.name} ({condo.apartment_count} apartamentos)
+                            <SelectItem key={condo.id} value={condo.id} className="hover:bg-accent">
+                              {condo.name} ({condo.apartment_count || 0} apartamentos)
+                              {condo.apartment_count === 0 && (
+                                <span className="text-muted-foreground ml-1">- valor não definido</span>
+                              )}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -362,14 +377,20 @@ const FinancialPortal = () => {
                       <Input
                         id="apartment-count"
                         type="number"
+                        min="1"
                         value={newClient.apartment_count || 0}
                         onChange={(e) => setNewClient({...newClient, apartment_count: parseInt(e.target.value) || 0})}
                         placeholder="Ex: 50"
-                        disabled={!!newClient.name}
+                        disabled={!!newClient.condominium_id && (newClient.apartment_count || 0) > 0}
                       />
-                      {newClient.name && (
+                      {newClient.condominium_id && (newClient.apartment_count || 0) > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Valor preenchido automaticamente baseado no condomínio selecionado
+                        </p>
+                      )}
+                      {newClient.condominium_id && (newClient.apartment_count || 0) === 0 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          ⚠️ Valor não definido no sistema - informe manualmente
                         </p>
                       )}
                     </div>
