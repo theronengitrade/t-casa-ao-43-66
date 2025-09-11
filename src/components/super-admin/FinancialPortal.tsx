@@ -39,6 +39,12 @@ interface City {
   overdue_count?: number;
 }
 
+interface Condominium {
+  id: string;
+  name: string;
+  apartment_count: number;
+}
+
 interface BusinessClient {
   id: string;
   name: string;
@@ -71,6 +77,7 @@ interface BusinessPayment {
 
 const FinancialPortal = () => {
   const [cities, setCities] = useState<City[]>([]);
+  const [condominiums, setCondominiums] = useState<Condominium[]>([]);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,6 +107,13 @@ const FinancialPortal = () => {
         .select('id, name');
       
       if (citiesError) throw citiesError;
+
+      // Buscar condomínios
+      const { data: condominiumsData, error: condominiumsError } = await supabase
+        .from('condominiums')
+        .select('id, name, apartment_count');
+      
+      if (condominiumsError) throw condominiumsError;
       
       // Buscar clientes de negócio
       const { data: clientsData, error: clientsError } = await supabase
@@ -153,6 +167,7 @@ const FinancialPortal = () => {
       });
       
       setCities(citiesWithData);
+      setCondominiums(condominiumsData || []);
       
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -308,13 +323,26 @@ const FinancialPortal = () => {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="client-name">Nome do Condomínio *</Label>
-                      <Input
-                        id="client-name"
-                        value={newClient.name || ''}
-                        onChange={(e) => setNewClient({...newClient, name: e.target.value})}
-                        placeholder="Ex: Residencial Talatona"
-                      />
+                      <Label htmlFor="condominium">Nome do Condomínio *</Label>
+                      <Select value={newClient.name || ''} onValueChange={(value) => {
+                        const selectedCondo = condominiums.find(c => c.name === value);
+                        setNewClient({
+                          ...newClient, 
+                          name: value,
+                          apartment_count: selectedCondo?.apartment_count || 0
+                        });
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o condomínio" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {condominiums.map(condo => (
+                            <SelectItem key={condo.id} value={condo.name}>
+                              {condo.name} ({condo.apartment_count} apartamentos)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="city">Cidade *</Label>
@@ -337,7 +365,13 @@ const FinancialPortal = () => {
                         value={newClient.apartment_count || 0}
                         onChange={(e) => setNewClient({...newClient, apartment_count: parseInt(e.target.value) || 0})}
                         placeholder="Ex: 50"
+                        disabled={!!newClient.name}
                       />
+                      {newClient.name && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Valor preenchido automaticamente baseado no condomínio selecionado
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="monthly-fee">Valor Mensal por Apartamento (AOA) *</Label>
