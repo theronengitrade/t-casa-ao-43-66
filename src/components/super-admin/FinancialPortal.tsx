@@ -333,7 +333,9 @@ const FinancialPortal = () => {
       }
 
       // Verificar se já existe pagamento para este mês
-      const existingPayment = selectedClient?.payments?.find(
+      const allClients = cities.flatMap(c => c.clients || []);
+      const targetClient = allClients.find(c => c.id === newPayment.client_id);
+      const existingPayment = targetClient?.payments?.find(
         p => p.year === newPayment.year && p.month === newPayment.month
       );
 
@@ -432,6 +434,20 @@ const FinancialPortal = () => {
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Cliente
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
+              <Dialog open={showAddPaymentModal} onOpenChange={setShowAddPaymentModal}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" onClick={() => {
+                    setNewPayment({
+                      year: selectedYear,
+                      month: new Date().getMonth() + 1,
+                      status: 'pending'
+                    });
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Pagamento
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -965,10 +981,21 @@ const FinancialPortal = () => {
               ) : (
                 <div className="text-center py-12">
                   <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Selecione um cliente</h3>
-                  <p className="text-muted-foreground">
-                    Escolha um cliente na aba "Clientes" para gerenciar seus pagamentos
+                  <h3 className="text-lg font-medium mb-2">Selecione um cliente ou adicione um pagamento</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Escolha um cliente na aba "Clientes" para gerenciar seus pagamentos ou adicione um pagamento para qualquer condomínio cadastrado.
                   </p>
+                  <Button onClick={() => {
+                    setNewPayment({
+                      year: selectedYear,
+                      month: new Date().getMonth() + 1,
+                      status: 'pending'
+                    });
+                    setShowAddPaymentModal(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Pagamento
+                  </Button>
                 </div>
               )}
             </TabsContent>
@@ -982,10 +1009,42 @@ const FinancialPortal = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Pagamento</DialogTitle>
             <DialogDescription>
-              Registrar um pagamento individual para {selectedClient?.name}
+              Registrar um pagamento individual para um condomínio cadastrado no portal financeiro
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="payment-client">Condomínio *</Label>
+              <Select value={newPayment.client_id || ''} onValueChange={(value) => {
+                const selectedClient = cities.flatMap(c => c.clients || []).find(c => c.id === value);
+                if (selectedClient) {
+                  setNewPayment({
+                    ...newPayment, 
+                    client_id: value,
+                    amount: selectedClient.apartment_count * selectedClient.monthly_fee_per_apartment
+                  });
+                }
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o condomínio" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  {cities.flatMap(city => 
+                    (city.clients || []).map(client => (
+                      <SelectItem key={client.id} value={client.id} className="hover:bg-accent">
+                        {client.name}
+                        <span className="text-muted-foreground ml-2">
+                          ({city.name} - {new Intl.NumberFormat('pt-AO', { 
+                            style: 'currency', 
+                            currency: 'AOA' 
+                          }).format(client.apartment_count * client.monthly_fee_per_apartment)})
+                        </span>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label htmlFor="payment-year">Ano *</Label>
               <Select value={newPayment.year?.toString() || ''} onValueChange={(value) => setNewPayment({...newPayment, year: parseInt(value)})}>
