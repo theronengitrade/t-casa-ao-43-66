@@ -85,6 +85,13 @@ const FinancialPortal = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [editingPayment, setEditingPayment] = useState<BusinessPayment | null>(null);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [showGeneratePaymentsModal, setShowGeneratePaymentsModal] = useState(false);
+  const [newPayment, setNewPayment] = useState<Partial<BusinessPayment>>({
+    year: selectedYear,
+    month: new Date().getMonth() + 1,
+    status: 'pending'
+  });
   const [newClient, setNewClient] = useState<Partial<BusinessClient>>({
     name: '',
     condominium_id: '',
@@ -265,6 +272,110 @@ const FinancialPortal = () => {
       toast({
         title: "Erro",
         description: "Erro ao adicionar cliente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const generatePayments = async (clientId: string, months: number[]) => {
+    try {
+      const client = cities.flatMap(c => c.clients || []).find(c => c.id === clientId);
+      if (!client) {
+        toast({
+          title: "Erro",
+          description: "Cliente não encontrado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const paymentAmount = client.apartment_count * client.monthly_fee_per_apartment;
+      const paymentsToInsert = months.map(month => ({
+        client_id: clientId,
+        year: selectedYear,
+        month,
+        amount: paymentAmount,
+        status: 'pending' as const
+      }));
+
+      const { error } = await supabase
+        .from('business_payments')
+        .insert(paymentsToInsert);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: `${paymentsToInsert.length} pagamentos gerados com sucesso`
+      });
+      
+      setShowGeneratePaymentsModal(false);
+      fetchData();
+    } catch (error) {
+      console.error('Erro ao gerar pagamentos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar pagamentos",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addIndividualPayment = async () => {
+    try {
+      if (!newPayment.client_id || !newPayment.year || !newPayment.month || !newPayment.amount) {
+        toast({
+          title: "Erro",
+          description: "Preencha todos os campos obrigatórios",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Verificar se já existe pagamento para este mês
+      const existingPayment = selectedClient?.payments?.find(
+        p => p.year === newPayment.year && p.month === newPayment.month
+      );
+
+      if (existingPayment) {
+        toast({
+          title: "Erro",
+          description: "Já existe um pagamento registrado para este mês",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('business_payments')
+        .insert([{
+          client_id: newPayment.client_id,
+          year: newPayment.year,
+          month: newPayment.month,
+          amount: newPayment.amount,
+          status: newPayment.status || 'pending',
+          notes: newPayment.notes
+        }]);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Pagamento adicionado com sucesso"
+      });
+      
+      setShowAddPaymentModal(false);
+      setNewPayment({
+        year: selectedYear,
+        month: new Date().getMonth() + 1,
+        status: 'pending'
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Erro ao adicionar pagamento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar pagamento",
         variant: "destructive"
       });
     }
@@ -742,9 +853,35 @@ const FinancialPortal = () => {
                     <h3 className="text-xl font-semibold">
                       Controle de Pagamentos - {selectedClient.name}
                     </h3>
-                    <Button variant="outline" onClick={() => setSelectedClient(null)}>
-                      Voltar
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setNewPayment({
+                            client_id: selectedClient.id,
+                            year: selectedYear,
+                            month: new Date().getMonth() + 1,
+                            amount: selectedClient.apartment_count * selectedClient.monthly_fee_per_apartment,
+                            status: 'pending'
+                          });
+                          setShowAddPaymentModal(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar Pagamento
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setShowGeneratePaymentsModal(true);
+                        }}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Gerar Pagamentos
+                      </Button>
+                      <Button variant="outline" onClick={() => setSelectedClient(null)}>
+                        Voltar
+                      </Button>
+                    </div>
                   </div>
                   
                   <Card>
@@ -838,6 +975,159 @@ const FinancialPortal = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* Modal Adicionar Pagamento Individual */}
+      <Dialog open={showAddPaymentModal} onOpenChange={setShowAddPaymentModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Pagamento</DialogTitle>
+            <DialogDescription>
+              Registrar um pagamento individual para {selectedClient?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="payment-year">Ano *</Label>
+              <Select value={newPayment.year?.toString() || ''} onValueChange={(value) => setNewPayment({...newPayment, year: parseInt(value)})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2023, 2024, 2025, 2026].map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="payment-month">Mês *</Label>
+              <Select value={newPayment.month?.toString() || ''} onValueChange={(value) => setNewPayment({...newPayment, month: parseInt(value)})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({length: 12}, (_, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>
+                      {format(new Date(2024, i, 1), 'MMMM', { locale: ptBR })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="payment-amount">Valor (AOA) *</Label>
+              <Input
+                id="payment-amount"
+                type="number"
+                value={newPayment.amount || 0}
+                onChange={(e) => setNewPayment({...newPayment, amount: parseFloat(e.target.value) || 0})}
+                placeholder="Ex: 5000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="payment-status">Status *</Label>
+              <Select value={newPayment.status || 'pending'} onValueChange={(value: 'paid' | 'pending' | 'overdue') => setNewPayment({...newPayment, status: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="paid">Pago</SelectItem>
+                  <SelectItem value="overdue">Em Atraso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="payment-notes">Observações</Label>
+              <Textarea
+                id="payment-notes"
+                value={newPayment.notes || ''}
+                onChange={(e) => setNewPayment({...newPayment, notes: e.target.value})}
+                placeholder="Observações sobre este pagamento"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddPaymentModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={addIndividualPayment}>
+              Adicionar Pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Gerar Pagamentos */}
+      <Dialog open={showGeneratePaymentsModal} onOpenChange={setShowGeneratePaymentsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gerar Pagamentos</DialogTitle>
+            <DialogDescription>
+              Gerar pagamentos automáticos para {selectedClient?.name} no ano {selectedYear}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Plano de Pagamento</Label>
+              <p className="text-sm text-muted-foreground">
+                {selectedClient?.payment_plan === 'monthly' ? 'Mensal (12 pagamentos)' : 
+                 selectedClient?.payment_plan === 'biannual' ? 'Semestral (2 pagamentos - Janeiro e Julho)' : 
+                 'Anual (1 pagamento - Janeiro)'}
+              </p>
+            </div>
+            <div>
+              <Label>Valor por Pagamento</Label>
+              <p className="text-lg font-medium">
+                {selectedClient && new Intl.NumberFormat('pt-AO', { 
+                  style: 'currency', 
+                  currency: 'AOA' 
+                }).format(selectedClient.apartment_count * selectedClient.monthly_fee_per_apartment)}
+              </p>
+            </div>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p className="text-sm">
+                <strong>Atenção:</strong> Esta ação irá gerar todos os pagamentos do ano {selectedYear} baseado no plano de pagamento do cliente. 
+                Pagamentos já existentes não serão duplicados.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGeneratePaymentsModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => {
+              if (!selectedClient) return;
+              
+              let months: number[] = [];
+              if (selectedClient.payment_plan === 'monthly') {
+                months = Array.from({length: 12}, (_, i) => i + 1);
+              } else if (selectedClient.payment_plan === 'biannual') {
+                months = [1, 7];
+              } else if (selectedClient.payment_plan === 'annual') {
+                months = [1];
+              }
+              
+              // Filtrar meses que já têm pagamentos
+              const existingMonths = selectedClient.payments?.map(p => p.month) || [];
+              const newMonths = months.filter(m => !existingMonths.includes(m));
+              
+              if (newMonths.length === 0) {
+                toast({
+                  title: "Aviso",
+                  description: "Todos os pagamentos do ano já foram gerados",
+                  variant: "default"
+                });
+                return;
+              }
+              
+              generatePayments(selectedClient.id, newMonths);
+            }}>
+              Gerar Pagamentos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
