@@ -1845,6 +1845,10 @@ export type Database = {
         Args: { _coordination_staff_id: string }
         Returns: Json
       }
+      sync_condominium_apartment_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       update_city_viewer_access: {
         Args: { _city_ids: string[]; _user_id: string }
         Returns: Json
