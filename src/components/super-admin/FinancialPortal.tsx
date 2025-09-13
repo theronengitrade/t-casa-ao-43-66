@@ -979,23 +979,141 @@ const FinancialPortal = () => {
                   </Card>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Selecione um cliente ou adicione um pagamento</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Escolha um cliente na aba "Clientes" para gerenciar seus pagamentos ou adicione um pagamento para qualquer condomínio cadastrado.
-                  </p>
-                  <Button onClick={() => {
-                    setNewPayment({
-                      year: selectedYear,
-                      month: new Date().getMonth() + 1,
-                      status: 'pending'
-                    });
-                    setShowAddPaymentModal(true);
-                  }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Pagamento
-                  </Button>
+                // Visão Geral de Todos os Condomínios
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium">Controle de Pagamentos - Todos os Condomínios</h3>
+                      <p className="text-muted-foreground">Acompanhe o status de pagamento de todos os condomínios cadastrados</p>
+                    </div>
+                    <Button onClick={() => {
+                      setNewPayment({
+                        year: selectedYear,
+                        month: new Date().getMonth() + 1,
+                        status: 'pending'
+                      });
+                      setShowAddPaymentModal(true);
+                    }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Pagamento
+                    </Button>
+                  </div>
+
+                  {/* Grid de Status de Todos os Condomínios */}
+                  <div className="space-y-6">
+                    {cities.map(city => (
+                      <div key={city.id} className="space-y-3">
+                        <h4 className="font-medium text-primary">{city.name}</h4>
+                        <div className="grid gap-4">
+                          {(city.clients || []).map(client => {
+                            const paidCount = client.payments?.filter(p => p.year === selectedYear && p.status === 'paid').length || 0;
+                            const overdueCount = client.payments?.filter(p => p.year === selectedYear && p.status === 'overdue').length || 0;
+                            const pendingCount = client.payments?.filter(p => p.year === selectedYear && p.status === 'pending').length || 0;
+                            const totalExpected = 12; // 12 meses
+                            const totalPaid = paidCount;
+                            const isDelinquent = overdueCount > 0 || (totalPaid < new Date().getMonth() + 1 && selectedYear === new Date().getFullYear());
+                            
+                            return (
+                              <Card key={client.id} className={`cursor-pointer transition-all hover:shadow-md ${isDelinquent ? 'border-destructive/50 bg-destructive/5' : 'border-success/50 bg-success/5'}`} 
+                                    onClick={() => setSelectedClient(client)}>
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <CardTitle className="text-base">{client.name}</CardTitle>
+                                      <CardDescription>
+                                        {client.apartment_count} apartamentos • {new Intl.NumberFormat('pt-AO', { 
+                                          style: 'currency', 
+                                          currency: 'AOA' 
+                                        }).format(client.apartment_count * client.monthly_fee_per_apartment)}/mês
+                                      </CardDescription>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                        isDelinquent 
+                                          ? 'bg-destructive/10 text-destructive' 
+                                          : 'bg-success/10 text-success'
+                                      }`}>
+                                        {isDelinquent ? (
+                                          <>
+                                            <AlertCircle className="h-3 w-3 mr-1" />
+                                            Inadimplente
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="h-3 w-3 mr-1" />
+                                            Em Dia
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  {/* Mini calendário de pagamentos */}
+                                  <div className="grid grid-cols-12 gap-1">
+                                    {Array.from({length: 12}, (_, monthIndex) => {
+                                      const monthPayment = client.payments?.find(
+                                        p => p.year === selectedYear && p.month === monthIndex + 1
+                                      );
+                                      const monthName = format(new Date(selectedYear, monthIndex, 1), 'MMM', { locale: ptBR });
+                                      
+                                      return (
+                                        <div key={monthIndex} className="text-center">
+                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mb-1 ${
+                                            monthPayment?.status === 'paid' ? 'bg-success text-success-foreground' :
+                                            monthPayment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground' :
+                                            monthPayment?.status === 'pending' ? 'bg-warning text-warning-foreground' :
+                                            'bg-muted text-muted-foreground'
+                                          }`}>
+                                            {monthIndex + 1}
+                                          </div>
+                                          <p className="text-xs text-muted-foreground">{monthName}</p>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  
+                                  {/* Resumo de status */}
+                                  <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                                    <div className="flex items-center space-x-4 text-xs">
+                                      <div className="flex items-center">
+                                        <div className="w-2 h-2 rounded-full bg-success mr-1" />
+                                        <span>{paidCount} Pagos</span>
+                                      </div>
+                                      <div className="flex items-center">
+                                        <div className="w-2 h-2 rounded-full bg-warning mr-1" />
+                                        <span>{pendingCount} Pendentes</span>
+                                      </div>
+                                      <div className="flex items-center">
+                                        <div className="w-2 h-2 rounded-full bg-destructive mr-1" />
+                                        <span>{overdueCount} Atrasados</span>
+                                      </div>
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedClient(client);
+                                    }}>
+                                      Ver Detalhes
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {cities.flatMap(c => c.clients || []).length === 0 && (
+                    <div className="text-center py-12">
+                      <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Nenhum condomínio cadastrado</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Adicione clientes na aba "Clientes" para começar a gerenciar pagamentos.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
