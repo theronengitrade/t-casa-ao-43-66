@@ -23,7 +23,9 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  Pencil
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -220,6 +222,51 @@ const FinancialPortal = () => {
       toast({
         title: "Erro",
         description: "Erro ao atualizar status do pagamento",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const createManualPayment = async (clientId: string, month: number, status: 'paid' | 'pending' | 'overdue') => {
+    try {
+      const client = cities.flatMap(c => c.clients || []).find(c => c.id === clientId);
+      if (!client) return;
+
+      // Verificar se já existe pagamento para este mês
+      const existingPayment = client.payments?.find(
+        p => p.year === selectedYear && p.month === month
+      );
+
+      if (existingPayment) {
+        // Atualizar status existente
+        await updatePaymentStatus(existingPayment.id, status);
+      } else {
+        // Criar novo pagamento
+        const { error } = await supabase
+          .from('business_payments')
+          .insert([{
+            client_id: clientId,
+            year: selectedYear,
+            month: month,
+            amount: client.apartment_count * client.monthly_fee_per_apartment,
+            status: status,
+            payment_date: status === 'paid' ? new Date().toISOString().split('T')[0] : null
+          }]);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Sucesso",
+          description: `Pagamento ${status === 'paid' ? 'pago' : status === 'pending' ? 'pendente' : 'atrasado'} criado para ${format(new Date(selectedYear, month - 1, 1), 'MMMM', { locale: ptBR })}`
+        });
+        
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Erro ao criar/atualizar pagamento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar pagamento",
         variant: "destructive"
       });
     }
@@ -936,35 +983,44 @@ const FinancialPortal = () => {
                           }
                           
                           return (
-                            <Card key={month} className="cursor-pointer hover:shadow-md transition-shadow"
-                                  onClick={() => payment && updatePaymentStatus(payment.id, 
-                                    payment.status === 'paid' ? 'pending' : 
-                                    payment.status === 'pending' ? 'overdue' : 'paid'
-                                  )}>
-                              <CardContent className="p-4 text-center">
+                            <Card key={month} className="group cursor-pointer hover:shadow-md transition-all duration-200 border-2 hover:border-primary/20">
+                              <CardContent className="p-3 text-center">
                                 <div className="mb-2">
-                                  <div className={`w-6 h-6 rounded-full mx-auto mb-2 flex items-center justify-center text-xs font-bold ${
-                                    payment?.status === 'paid' ? 'bg-success text-success-foreground' :
-                                    payment?.status === 'pending' ? 'bg-warning text-warning-foreground' :
-                                    payment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground' : 
-                                    'bg-muted text-muted-foreground'
+                                  <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                                    payment?.status === 'paid' ? 'bg-green-500 text-white border-2 border-green-400' :
+                                    payment?.status === 'pending' ? 'bg-yellow-500 text-white border-2 border-yellow-400' :
+                                    payment?.status === 'overdue' ? 'bg-red-500 text-white border-2 border-red-400' : 
+                                    'bg-gray-200 text-gray-600 border-2 border-gray-300 hover:bg-gray-300'
                                   }`}>
                                     {month}
                                   </div>
                                   <p className="text-sm font-medium capitalize">{monthName}</p>
                                 </div>
-                                <div className="text-xs space-y-1">
-                                  <p className="text-muted-foreground">
+                                
+                                <div className="text-xs space-y-1 mb-3">
+                                  <p className={`font-medium ${
+                                    payment?.status === 'paid' ? 'text-green-600' :
+                                    payment?.status === 'pending' ? 'text-yellow-600' :
+                                    payment?.status === 'overdue' ? 'text-red-600' : 
+                                    'text-gray-500'
+                                  }`}>
                                     {payment?.status === 'paid' ? 'Pago' :
                                      payment?.status === 'pending' ? 'Pendente' :
                                      payment?.status === 'overdue' ? 'Atrasado' : 'Sem Pagamento'}
                                   </p>
-                                  {payment && (
-                                    <p className="font-medium">
+                                  {payment ? (
+                                    <p className="font-medium text-foreground">
                                       {new Intl.NumberFormat('pt-AO', { 
                                         style: 'currency', 
                                         currency: 'AOA' 
                                       }).format(payment.amount)}
+                                    </p>
+                                  ) : (
+                                    <p className="font-medium text-muted-foreground">
+                                      {new Intl.NumberFormat('pt-AO', { 
+                                        style: 'currency', 
+                                        currency: 'AOA' 
+                                      }).format(selectedClient.apartment_count * selectedClient.monthly_fee_per_apartment)}
                                     </p>
                                   )}
                                   {payment?.payment_date && (
@@ -972,6 +1028,40 @@ const FinancialPortal = () => {
                                       {format(new Date(payment.payment_date), 'dd/MM', { locale: ptBR })}
                                     </p>
                                   )}
+                                </div>
+
+                                {/* Botões de Controle Manual */}
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      createManualPayment(selectedClient.id, month, 'paid');
+                                    }}
+                                    className="flex-1 p-1 rounded bg-green-100 hover:bg-green-200 text-green-700 transition-colors"
+                                    title="Marcar como Pago"
+                                  >
+                                    <Check className="h-3 w-3 mx-auto" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      createManualPayment(selectedClient.id, month, 'pending');
+                                    }}
+                                    className="flex-1 p-1 rounded bg-yellow-100 hover:bg-yellow-200 text-yellow-700 transition-colors"
+                                    title="Marcar como Pendente"
+                                  >
+                                    <Clock className="h-3 w-3 mx-auto" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      createManualPayment(selectedClient.id, month, 'overdue');
+                                    }}
+                                    className="flex-1 p-1 rounded bg-red-100 hover:bg-red-200 text-red-700 transition-colors"
+                                    title="Marcar como Atrasado"
+                                  >
+                                    <X className="h-3 w-3 mx-auto" />
+                                  </button>
                                 </div>
                               </CardContent>
                             </Card>
@@ -1069,19 +1159,35 @@ const FinancialPortal = () => {
                                       );
                                       const monthName = format(new Date(selectedYear, monthIndex, 1), 'MMM', { locale: ptBR });
                                       
-                                      return (
-                                        <div key={monthIndex} className="text-center">
-                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mb-1 border-2 ${
-                                            monthPayment?.status === 'paid' ? 'bg-success text-success-foreground border-success/50' :
-                                            monthPayment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground border-destructive/50' :
-                                            monthPayment?.status === 'pending' ? 'bg-warning text-warning-foreground border-warning/50' :
-                                            'bg-muted text-muted-foreground border-muted'
-                                          }`}>
-                                            {monthIndex + 1}
-                                          </div>
-                                          <p className="text-xs text-muted-foreground">{monthName}</p>
-                                        </div>
-                                      );
+                                       return (
+                                         <div key={monthIndex} className="text-center group cursor-pointer">
+                                           <div 
+                                             className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mb-1 border-2 transition-all duration-200 hover:scale-110 ${
+                                               monthPayment?.status === 'paid' ? 'bg-green-500 text-white border-green-400' :
+                                               monthPayment?.status === 'overdue' ? 'bg-red-500 text-white border-red-400' :
+                                               monthPayment?.status === 'pending' ? 'bg-yellow-500 text-white border-yellow-400' :
+                                               'bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-300'
+                                             }`}
+                                             onClick={(e) => {
+                                               e.stopPropagation();
+                                               if (monthPayment) {
+                                                 // Ciclar através dos status
+                                                 const nextStatus = monthPayment.status === 'paid' ? 'pending' : 
+                                                                   monthPayment.status === 'pending' ? 'overdue' : 'paid';
+                                                 updatePaymentStatus(monthPayment.id, nextStatus);
+                                               } else {
+                                                 createManualPayment(client.id, monthIndex + 1, 'paid');
+                                               }
+                                             }}
+                                             title={`${monthName} - ${monthPayment?.status === 'paid' ? 'Pago' :
+                                                      monthPayment?.status === 'pending' ? 'Pendente' :
+                                                      monthPayment?.status === 'overdue' ? 'Atrasado' : 'Sem Pagamento'} (Clique para alterar)`}
+                                           >
+                                             {monthIndex + 1}
+                                           </div>
+                                           <p className="text-xs text-muted-foreground">{monthName}</p>
+                                         </div>
+                                       );
                                     })}
                                   </div>
                                   
