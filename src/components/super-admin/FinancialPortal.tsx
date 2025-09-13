@@ -904,14 +904,14 @@ const FinancialPortal = () => {
                     <CardHeader>
                       <CardTitle>Pagamentos {selectedYear}</CardTitle>
                       <CardDescription>
-                        Clique nos status para alterar: Verde (pago), Amarelo (por confirmar), Vermelho (em atraso)
+                        Clique nos status para alterar: Verde (pago), Amarelo (pendente), Vermelho (atrasado)
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         {Array.from({length: 12}, (_, i) => {
                           const month = i + 1;
-                          const payment = selectedClient.payments?.find(p => p.month === month);
+                          const payment = selectedClient.payments?.find(p => p.month === month && p.year === selectedYear);
                           const monthName = format(new Date(2024, i, 1), 'MMM', { locale: ptBR });
                           
                           // Determinar se o mês deve estar ativo baseado no plano de pagamento
@@ -924,7 +924,7 @@ const FinancialPortal = () => {
                               <Card key={month} className="opacity-50">
                                 <CardContent className="p-4 text-center">
                                   <div className="mb-2">
-                                    <div className="w-4 h-4 rounded-full mx-auto mb-2 bg-gray-200" />
+                                    <div className="w-6 h-6 rounded-full mx-auto mb-2 bg-muted" />
                                     <p className="text-sm font-medium capitalize">{monthName}</p>
                                   </div>
                                   <div className="text-xs">
@@ -943,18 +943,21 @@ const FinancialPortal = () => {
                                   )}>
                               <CardContent className="p-4 text-center">
                                 <div className="mb-2">
-                                  <div className={`w-4 h-4 rounded-full mx-auto mb-2 ${
-                                    payment?.status === 'paid' ? 'bg-green-500' :
-                                    payment?.status === 'pending' ? 'bg-yellow-500' :
-                                    payment?.status === 'overdue' ? 'bg-red-500' : 'bg-gray-300'
-                                  }`} />
+                                  <div className={`w-6 h-6 rounded-full mx-auto mb-2 flex items-center justify-center text-xs font-bold ${
+                                    payment?.status === 'paid' ? 'bg-success text-success-foreground' :
+                                    payment?.status === 'pending' ? 'bg-warning text-warning-foreground' :
+                                    payment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground' : 
+                                    'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {month}
+                                  </div>
                                   <p className="text-sm font-medium capitalize">{monthName}</p>
                                 </div>
                                 <div className="text-xs space-y-1">
                                   <p className="text-muted-foreground">
                                     {payment?.status === 'paid' ? 'Pago' :
                                      payment?.status === 'pending' ? 'Pendente' :
-                                     payment?.status === 'overdue' ? 'Em Atraso' : 'N/A'}
+                                     payment?.status === 'overdue' ? 'Atrasado' : 'Sem Pagamento'}
                                   </p>
                                   {payment && (
                                     <p className="font-medium">
@@ -999,11 +1002,20 @@ const FinancialPortal = () => {
                     </Button>
                   </div>
 
-                  {/* Grid de Status de Todos os Condomínios */}
+                  {/* Grid de Status de Todos os Condomínios por Cidade */}
                   <div className="space-y-6">
                     {cities.map(city => (
                       <div key={city.id} className="space-y-3">
-                        <h4 className="font-medium text-primary">{city.name}</h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-primary cursor-pointer hover:text-primary/80 transition-colors"
+                              onClick={() => setSelectedCity(city)}>
+                            {city.name}
+                          </h4>
+                          <Badge variant="outline" className="cursor-pointer hover:bg-accent transition-colors"
+                                 onClick={() => setSelectedCity(city)}>
+                            {(city.clients || []).length} condomínios • Clique para gerenciar
+                          </Badge>
+                        </div>
                         <div className="grid gap-4">
                           {(city.clients || []).map(client => {
                             const paidCount = client.payments?.filter(p => p.year === selectedYear && p.status === 'paid').length || 0;
@@ -1059,11 +1071,11 @@ const FinancialPortal = () => {
                                       
                                       return (
                                         <div key={monthIndex} className="text-center">
-                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mb-1 ${
-                                            monthPayment?.status === 'paid' ? 'bg-success text-success-foreground' :
-                                            monthPayment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground' :
-                                            monthPayment?.status === 'pending' ? 'bg-warning text-warning-foreground' :
-                                            'bg-muted text-muted-foreground'
+                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mb-1 border-2 ${
+                                            monthPayment?.status === 'paid' ? 'bg-success text-success-foreground border-success/50' :
+                                            monthPayment?.status === 'overdue' ? 'bg-destructive text-destructive-foreground border-destructive/50' :
+                                            monthPayment?.status === 'pending' ? 'bg-warning text-warning-foreground border-warning/50' :
+                                            'bg-muted text-muted-foreground border-muted'
                                           }`}>
                                             {monthIndex + 1}
                                           </div>
