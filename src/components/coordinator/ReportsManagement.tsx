@@ -225,6 +225,8 @@ export function ReportsManagement() {
           move_in_date,
           emergency_contact_name,
           emergency_contact_phone,
+          parking_spaces,
+          family_members,
           profiles!inner(
             first_name,
             last_name,

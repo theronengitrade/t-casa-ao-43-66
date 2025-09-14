@@ -60,6 +60,8 @@ export interface ReportData {
     move_in_date?: string;
     emergency_contact_name?: string;
     emergency_contact_phone?: string;
+    parking_spaces?: any;
+    family_members?: any;
     profiles: {
       first_name: string;
       last_name: string;
@@ -562,25 +564,42 @@ export class ReportGenerator {
       this.checkPageSpace(100); // Ensure space for at least table header
       
       const tableData = [
-        ['Apartamento', 'Nome Completo', 'Tipo', 'Telefone', 'Documento', 'Contato Emergência']
+        ['Residente', 'Apartamento', 'Agregado/Estacionamento', 'Contacto', 'Tipo', 'Data de Entrada']
       ];
       
       data.detailedResidents.forEach((resident) => {
         const fullName = `${resident.profiles.first_name} ${resident.profiles.last_name}`;
         const type = resident.is_owner ? 'Proprietário' : 'Inquilino';
         const phone = resident.profiles.phone || 'N/A';
-        const document = resident.document_number || 'N/A';
-        const emergency = resident.emergency_contact_name 
-          ? `${resident.emergency_contact_name}${resident.emergency_contact_phone ? ` (${resident.emergency_contact_phone})` : ''}`
+        
+        // Format agregados and parking spaces
+        let agregadoInfo = '';
+        const familyMembers = Array.isArray(resident.family_members) ? resident.family_members : [];
+        const parkingSpaces = Array.isArray(resident.parking_spaces) ? resident.parking_spaces : [];
+        
+        const familyCount = familyMembers.length;
+        const parkingCount = parkingSpaces.length;
+        
+        if (familyCount > 0 || parkingCount > 0) {
+          const parts = [];
+          if (familyCount > 0) parts.push(`${familyCount} membro(s)`);
+          if (parkingCount > 0) parts.push(`${parkingCount} lugar(es)`);
+          agregadoInfo = parts.join(' | ');
+        } else {
+          agregadoInfo = 'N/A';
+        }
+        
+        const moveInDate = resident.move_in_date 
+          ? format(new Date(resident.move_in_date), 'dd/MM/yyyy')
           : 'N/A';
 
         tableData.push([
-          resident.apartment_number,
           fullName,
-          type,
+          resident.apartment_number,
+          agregadoInfo,
           phone,
-          document,
-          emergency
+          type,
+          moveInDate
         ]);
       });
 
@@ -604,12 +623,12 @@ export class ReportGenerator {
             fillColor: [248, 249, 250]
           },
           columnStyles: {
-            0: { cellWidth: 20 },  // Apartamento - reduzido
-            1: { cellWidth: 50 },  // Nome Completo - aumentado para priorizar
-            2: { cellWidth: 20 },  // Tipo - reduzido
-            3: { cellWidth: 25 },  // Telefone - reduzido
-            4: { cellWidth: 25 },  // Documento - reduzido
-            5: { cellWidth: 30 }   // Contato Emergência - reduzido
+            0: { cellWidth: 45 },  // Residente - nome completo
+            1: { cellWidth: 20 },  // Apartamento
+            2: { cellWidth: 35 },  // Agregado/Estacionamento
+            3: { cellWidth: 25 },  // Contacto
+            4: { cellWidth: 25 },  // Tipo
+            5: { cellWidth: 20 }   // Data de Entrada
           },
           margin: { 
             left: this.margin, 
