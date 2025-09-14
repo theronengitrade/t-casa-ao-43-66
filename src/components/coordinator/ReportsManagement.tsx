@@ -382,6 +382,7 @@ export function ReportsManagement() {
 
       switch (reportType) {
         case 'Moradores':
+          console.log('Generating residents report with data:', enhancedData.detailedResidents?.length, 'residents');
           reportGenerator.generateResidentsReport(enhancedData);
           break;
         case 'Financeiro':

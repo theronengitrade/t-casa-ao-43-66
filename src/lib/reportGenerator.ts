@@ -516,6 +516,7 @@ export class ReportGenerator {
   }
 
   generateResidentsReport(data: ReportData): void {
+    console.log('=== NOVO FORMATO DE RELATÓRIO DE MORADORES ===');
     this.addProfessionalHeader(data.condominiumInfo, 'Relatório Detalhado de Moradores');
 
     // Contact information section if available
@@ -558,11 +559,12 @@ export class ReportGenerator {
 
     this.addStatisticsCards(data);
 
-    // Detailed residents table
+    // NOVA ESTRUTURA DA TABELA DE MORADORES
     if (data.detailedResidents && data.detailedResidents.length > 0) {
       this.addSectionTitle('Lista Completa de Moradores');
-      this.checkPageSpace(100); // Ensure space for at least table header
+      this.checkPageSpace(100);
       
+      // NOVAS COLUNAS: Residente, Apartamento, Agregado/Estacionamento, Contacto, Tipo, Data de Entrada
       const tableData = [
         ['Residente', 'Apartamento', 'Agregado/Estacionamento', 'Contacto', 'Tipo', 'Data de Entrada']
       ];
@@ -593,13 +595,14 @@ export class ReportGenerator {
           ? format(new Date(resident.move_in_date), 'dd/MM/yyyy')
           : 'N/A';
 
+        // NOVA ORDEM DAS COLUNAS
         tableData.push([
-          fullName,
-          resident.apartment_number,
-          agregadoInfo,
-          phone,
-          type,
-          moveInDate
+          fullName,              // Residente
+          resident.apartment_number, // Apartamento  
+          agregadoInfo,          // Agregado/Estacionamento
+          phone,                 // Contacto
+          type,                  // Tipo
+          moveInDate            // Data de Entrada
         ]);
       });
 
@@ -623,7 +626,7 @@ export class ReportGenerator {
             fillColor: [248, 249, 250]
           },
           columnStyles: {
-            0: { cellWidth: 45 },  // Residente - nome completo
+            0: { cellWidth: 45 },  // Residente
             1: { cellWidth: 20 },  // Apartamento
             2: { cellWidth: 35 },  // Agregado/Estacionamento
             3: { cellWidth: 25 },  // Contacto
