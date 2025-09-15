@@ -1,16 +1,8 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
-
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 export interface ReportData {
   residents?: number;
@@ -178,19 +170,9 @@ export interface ReceiptData {
 
 export class ReportGenerator {
   private doc: jsPDF;
-  private pageHeight: number;
-  private pageWidth: number;
-  private margin: number;
-  private currentY: number;
-  private footerHeight: number;
 
   constructor() {
     this.doc = new jsPDF();
-    this.pageHeight = this.doc.internal.pageSize.height;
-    this.pageWidth = this.doc.internal.pageSize.width;
-    this.margin = 20;
-    this.currentY = this.margin;
-    this.footerHeight = 60; // Reduced footer height for better spacing
   }
 
   private generateDocumentId(): string {
@@ -217,715 +199,557 @@ export class ReportGenerator {
     }
   }
 
-  private checkPageSpace(requiredHeight: number): void {
-    const availableHeight = this.pageHeight - this.footerHeight - this.currentY;
-    if (availableHeight < requiredHeight) {
-      this.addNewPage();
-    }
-  }
-
-  private async addNewPage(): Promise<void> {
-    await this.addTCasaFooter();
-    this.doc.addPage();
-    this.currentY = this.margin;
-  }
-
-  private async updateCurrentY(additionalSpace: number = 0): Promise<void> {
-    this.currentY += additionalSpace;
-    if (this.currentY > this.pageHeight - this.footerHeight - 20) {
-      await this.addNewPage();
-    }
-  }
-
-  private addTCasaHeader(condominiumInfo: any, reportTitle: string, documentId: string) {
-    // Header background
-    this.doc.setFillColor(248, 249, 250);
-    this.doc.rect(0, 0, this.pageWidth, 50, 'F');
-    
-    // Main title
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFontSize(20);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('T-CASA — Relatório', this.pageWidth / 2, 20, { align: 'center' });
-    
-    // Condominium info
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'normal');
-    const condominiumText = `Condomínio: ${condominiumInfo?.name || 'N/A'} · ID: ${documentId}`;
-    this.doc.text(condominiumText, this.pageWidth / 2, 35, { align: 'center' });
-
-    // Meta information
-    const currentDateTime = new Date().toISOString();
-    const systemVersion = '2.5.1';
-    this.doc.setFontSize(11);
-    this.doc.setTextColor(108, 117, 125);
-    const metaText = `Emitido em: ${currentDateTime} · Documento ID: ${documentId} · Versão do Sistema: ${systemVersion}`;
-    this.doc.text(metaText, this.pageWidth / 2, 55, { align: 'center' });
-
-    // Report title
-    this.doc.setFontSize(16);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(220, 53, 69);
-    this.doc.text(reportTitle, this.pageWidth / 2, 75, { align: 'center' });
-
-    this.currentY = 85;
-  }
-
-  private async addTCasaFooter(documentId?: string): Promise<void> {
-    const footerY = this.pageHeight - 60;
-    const docId = documentId || this.generateDocumentId();
+  private async generateTCasaHTMLTemplate(
+    reportTitle: string,
+    condominiumInfo: any,
+    documentId: string,
+    content: string
+  ): Promise<string> {
     const currentDateTime = new Date().toISOString();
     const systemVersion = '2.5.1';
     
     // Generate content for hash
-    const contentForHash = `${docId}-${currentDateTime}-${systemVersion}`;
+    const contentForHash = `${documentId}-${currentDateTime}-${systemVersion}-${content}`;
     const documentHash = this.generateDocumentHash(contentForHash);
     
     // Verification URL
-    const verificationUrl = `https://tcasa.ao/verify?doc=${docId}`;
+    const verificationUrl = `https://tcasa.ao/verify?doc=${documentId}`;
     
     // Generate QR Code
-    const qrCodeDataUrl = await this.generateQRCode(verificationUrl);
+    const qrCodeBase64 = await this.generateQRCode(verificationUrl);
 
-    // Footer background area
-    this.doc.setFillColor(248, 249, 250);
-    this.doc.rect(0, footerY - 5, this.pageWidth, 60, 'F');
-    
-    // Top border line
-    this.doc.setDrawColor(220, 220, 220);
-    this.doc.setLineWidth(0.5);
-    this.doc.line(0, footerY - 5, this.pageWidth, footerY - 5);
+    return `<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório - T-Casa</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; font-size: 12px; }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { margin: 0; font-size: 20px; }
+        .meta { text-align: center; font-size: 11px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 11px; }
+        th { background: #f4f4f4; }
+        footer { font-size: 10px; text-align: center; margin-top: 40px; }
+        .stats { margin-bottom: 20px; font-size: 12px; }
+        .stats p { margin: 2px 0; }
+        .qr img { margin-top: 10px; width: 100px; height: 100px; }
+        .section-title { font-size: 14px; font-weight: bold; color: #2980b9; margin: 20px 0 10px 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>T-CASA — Relatório</h1>
+        <p>Condomínio: ${condominiumInfo?.name || 'N/A'} · ID: ${documentId}</p>
+        <h2 style="color: #dc3545; margin: 10px 0;">${reportTitle}</h2>
+    </header>
+    <div class="meta">
+        Emitido em: ${currentDateTime} · Documento ID: ${documentId} · Versão do Sistema: ${systemVersion}
+    </div>
 
-    // Footer text styling
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(108, 117, 125);
-    this.doc.setFont('helvetica', 'normal');
-    
-    // Line 1: Document info
-    const footerLine1 = `Documento gerado automaticamente por T-Casa ${systemVersion} · Documento ID: ${docId}`;
-    this.doc.text(footerLine1, this.pageWidth / 2, footerY + 8, { align: 'center' });
-    
-    // Line 2: Hash and verification URL (split if too long)
-    const hashText = `Hash SHA256: ${documentHash}`;
-    const verifyText = `Verifique autenticidade em: ${verificationUrl}`;
-    
-    this.doc.text(hashText, this.pageWidth / 2, footerY + 16, { align: 'center' });
-    this.doc.text(verifyText, this.pageWidth / 2, footerY + 24, { align: 'center' });
+    ${content}
 
-    // Add QR Code if generated successfully
-    if (qrCodeDataUrl) {
-      try {
-        const qrSize = 20;
-        const qrX = (this.pageWidth - qrSize) / 2;
-        const qrY = footerY + 30;
-        this.doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-      } catch (error) {
-        console.error('Error adding QR code to PDF:', error);
-      }
-    }
+    <footer>
+        Documento gerado automaticamente por T-Casa ${systemVersion} · Documento ID: ${documentId}<br>
+        Hash SHA256: ${documentHash} · Verifique autenticidade em: ${verificationUrl}
+        <div class="qr">
+            <img src="${qrCodeBase64}" alt="QR Code de Verificação">
+        </div>
+    </footer>
+</body>
+</html>`;
   }
 
-  private addSectionTitle(title: string) {
-    this.checkPageSpace(30);
-    this.doc.setFontSize(14);
+  private htmlToJsPDF(html: string): void {
+    // Since jsPDF doesn't support direct HTML rendering well,
+    // we'll create a temporary element and extract text content
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Reset PDF
+    this.doc = new jsPDF();
+    
+    let yPosition = 20;
+    const pageWidth = this.doc.internal.pageSize.width;
+    const margin = 20;
+    
+    // Extract and render content sections
+    const headerH1 = doc.querySelector('header h1')?.textContent || '';
+    const headerP = doc.querySelector('header p')?.textContent || '';
+    const metaDiv = doc.querySelector('.meta')?.textContent || '';
+    
+    // Header
+    this.doc.setFontSize(20);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(41, 128, 185);
-    this.doc.text(title, this.margin, this.currentY);
-    this.updateCurrentY(15);
-  }
-
-  private addStatisticsCards(data: ReportData) {
-    this.checkPageSpace(60);
+    this.doc.text(headerH1, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
     
-    const cardWidth = (this.pageWidth - this.margin * 2 - 30) / 4;
-    const cardHeight = 30;
-    let startX = this.margin;
-
-    const cards = [
-      { title: 'Moradores', value: data.residents?.toString() || '0', color: [52, 152, 219] },
-      { title: 'Visitantes', value: data.visitors?.toString() || '0', color: [46, 204, 113] },
-      { title: 'Anúncios', value: data.announcements?.toString() || '0', color: [155, 89, 182] },
-      { title: 'Ocupação', value: `${data.occupancy || 0}%`, color: [230, 126, 34] }
-    ];
-
-    cards.forEach((card, index) => {
-      const x = startX + (cardWidth + 10) * index;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.text(headerP, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 20;
+    
+    // Meta
+    this.doc.setFontSize(11);
+    this.doc.setTextColor(108, 117, 125);
+    this.doc.text(metaDiv, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 30;
+    
+    // Content sections
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(12);
+    
+    const sections = doc.querySelectorAll('.section-title, .stats, table');
+    sections.forEach((section) => {
+      if (yPosition > 250) {
+        this.doc.addPage();
+        yPosition = 20;
+      }
       
-      this.doc.setFillColor(card.color[0], card.color[1], card.color[2]);
-      this.doc.roundedRect(x, this.currentY, cardWidth, cardHeight, 3, 3, 'F');
-      
-      this.doc.setTextColor(255, 255, 255);
-      this.doc.setFontSize(18);
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.text(card.value, x + cardWidth/2, this.currentY + 12, { align: 'center' });
-      
-      this.doc.setFontSize(9);
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.text(card.title, x + cardWidth/2, this.currentY + 22, { align: 'center' });
+      if (section.classList.contains('section-title')) {
+        this.doc.setFontSize(14);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.setTextColor(41, 128, 185);
+        this.doc.text(section.textContent || '', margin, yPosition);
+        yPosition += 15;
+      } else if (section.classList.contains('stats')) {
+        this.doc.setFontSize(12);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setTextColor(0, 0, 0);
+        const stats = section.textContent?.split('\n').filter(line => line.trim()) || [];
+        stats.forEach((stat) => {
+          this.doc.text(stat.trim(), margin, yPosition);
+          yPosition += 8;
+        });
+        yPosition += 10;
+      }
     });
-
-    this.updateCurrentY(cardHeight + 20);
+    
+    // Footer on last page
+    yPosition = this.doc.internal.pageSize.height - 80;
+    const footerText = doc.querySelector('footer')?.textContent?.replace(/QR Code de Verificação/g, '') || '';
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(108, 117, 125);
+    this.doc.text(footerText, pageWidth / 2, yPosition, { align: 'center' });
   }
 
   async generateResidentsReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Moradores', documentId);
-
-    // Statistics section
-    this.addSectionTitle('Resumo Estatístico');
-    this.checkPageSpace(50);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(33, 37, 41);
-    this.doc.setFont('helvetica', 'normal');
     
-    const stats = [
-      `Total de moradores cadastrados: ${data.detailedResidents?.length || 0}`,
-      `Taxa de ocupação estimada: ${data.occupancy || 0}%`,
-      `Período do relatório: ${data.period || 'Atual'}`
-    ];
-
-    stats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 8));
-    });
-    this.updateCurrentY(30);
-
-    // Statistics cards
-    this.addStatisticsCards(data);
-
-    // Lista Completa de Moradores
-    if (data.detailedResidents && data.detailedResidents.length > 0) {
-      this.addSectionTitle('Lista Completa de Moradores');
-      this.checkPageSpace(100);
-      
-      const tableData = [
-        ['Residente', 'Apartamento', 'Agregado/Estacionamento', 'Contacto', 'Tipo', 'Data de Entrada']
-      ];
-      
-      data.detailedResidents.forEach((resident) => {
-        const fullName = `${resident.profiles.first_name} ${resident.profiles.last_name}`;
-        const type = resident.is_owner ? 'Proprietário' : 'Inquilino';
-        const phone = resident.profiles.phone || 'N/A';
-        
-        // Format agregados and parking spaces
-        let agregadoInfo = '';
-        const familyMembers = Array.isArray(resident.family_members) ? resident.family_members : [];
-        const parkingSpaces = Array.isArray(resident.parking_spaces) ? resident.parking_spaces : [];
-        
-        const familyCount = familyMembers.length;
-        const parkingCount = parkingSpaces.length;
-        
-        if (familyCount > 0 || parkingCount > 0) {
-          const parts = [];
-          if (familyCount > 0) parts.push(`${familyCount} membro(s)`);
-          if (parkingCount > 0) parts.push(`${parkingCount} lugar(es)`);
-          agregadoInfo = parts.join(' | ');
-        } else {
-          agregadoInfo = 'N/A';
-        }
-        
-        const moveInDate = resident.move_in_date 
-          ? format(new Date(resident.move_in_date), 'dd/MM/yyyy')
-          : 'N/A';
-
-        tableData.push([
-          fullName,
-          resident.apartment_number,
-          agregadoInfo,
-          phone,
-          type,
-          moveInDate
-        ]);
-      });
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'striped',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          columnStyles: {
-            0: { cellWidth: 45 },
-            1: { cellWidth: 20 },
-            2: { cellWidth: 35 },
-            3: { cellWidth: 25 },
-            4: { cellWidth: 25 },
-            5: { cellWidth: 20 }
-          },
-          margin: { 
-            left: this.margin, 
-            right: this.margin,
-            top: this.margin,
-            bottom: this.footerHeight 
-          },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
-      } catch (error) {
-        console.error('Error creating table:', error);
-        this.updateCurrentY(100);
-      }
+    let statsContent = '';
+    if (data.detailedResidents) {
+      statsContent = `
+        <div class="stats">
+          <p>Total de moradores cadastrados: ${data.detailedResidents.length}</p>
+          <p>Taxa de ocupação estimada: ${data.occupancy || 0}%</p>
+          <p>Período do relatório: ${data.period || 'Atual'}</p>
+        </div>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    let tableContent = '';
+    if (data.detailedResidents && data.detailedResidents.length > 0) {
+      tableContent = `
+        <div class="section-title">Lista Completa de Moradores</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Residente</th>
+              <th>Apartamento</th>
+              <th>Agregados/Estacionamento</th>
+              <th>Contacto</th>
+              <th>Tipo</th>
+              <th>Data de Entrada</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.detailedResidents.map(resident => {
+              const fullName = `${resident.profiles.first_name} ${resident.profiles.last_name}`;
+              const type = resident.is_owner ? 'Proprietário' : 'Inquilino';
+              const phone = resident.profiles.phone || 'N/A';
+              
+              const familyMembers = Array.isArray(resident.family_members) ? resident.family_members : [];
+              const parkingSpaces = Array.isArray(resident.parking_spaces) ? resident.parking_spaces : [];
+              
+              let agregadoInfo = '';
+              const familyCount = familyMembers.length;
+              const parkingCount = parkingSpaces.length;
+              
+              if (familyCount > 0 || parkingCount > 0) {
+                const parts = [];
+                if (familyCount > 0) parts.push(`${familyCount} membro(s)`);
+                if (parkingCount > 0) parts.push(`${parkingCount} lugar(es)`);
+                agregadoInfo = parts.join(' | ');
+              } else {
+                agregadoInfo = 'N/A';
+              }
+              
+              const moveInDate = resident.move_in_date 
+                ? format(new Date(resident.move_in_date), 'dd/MM/yyyy')
+                : 'N/A';
+
+              return `
+                <tr>
+                  <td>${fullName}</td>
+                  <td>${resident.apartment_number}</td>
+                  <td>${agregadoInfo}</td>
+                  <td>${phone}</td>
+                  <td>${type}</td>
+                  <td>${moveInDate}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    const content = `
+      <div class="section-title">Resumo Estatístico</div>
+      ${statsContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'Relatório de Moradores',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateFinancialReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'Relatório Financeiro', documentId);
-
-    this.addSectionTitle('Resumo Financeiro');
-    this.checkPageSpace(30);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFont('helvetica', 'normal');
     
-    const financialStats = [
-      `Período: ${data.period || 'Atual'}`,
-      `Moeda: ${data.condominiumInfo?.currency || 'AOA'}`
-    ];
+    let statsContent = `
+      <div class="stats">
+        <p>Período: ${data.period || 'Atual'}</p>
+        <p>Moeda: ${data.condominiumInfo?.currency || 'AOA'}</p>
+      </div>
+    `;
 
-    financialStats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 10));
-    });
-    this.updateCurrentY(30);
-
-    this.addStatisticsCards(data);
-
+    let tableContent = '';
     if (data.remanescente) {
-      this.addSectionTitle('Gestão do Remanescente');
-      this.checkPageSpace(80);
-
-      const tableData = [
-        ['Descrição', 'Valor'],
-        ['Receita do Ano', data.remanescente.receita_atual.toFixed(2)],
-        ['Despesas do Ano', data.remanescente.despesas_atual.toFixed(2)],
-        ['Remanescente Total', data.remanescente.remanescente_total.toFixed(2)],
-        ['Saldo Disponível', data.remanescente.saldo_disponivel.toFixed(2)]
-      ];
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'grid',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-      } catch (error) {
-        console.error('Error creating financial table:', error);
-        this.updateCurrentY(80);
-      }
+      tableContent = `
+        <div class="section-title">Gestão do Remanescente</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Receita do Ano</td><td>${data.remanescente.receita_atual.toFixed(2)}</td></tr>
+            <tr><td>Despesas do Ano</td><td>${data.remanescente.despesas_atual.toFixed(2)}</td></tr>
+            <tr><td>Remanescente Total</td><td>${data.remanescente.remanescente_total.toFixed(2)}</td></tr>
+            <tr><td>Saldo Disponível</td><td>${data.remanescente.saldo_disponivel.toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Resumo Financeiro</div>
+      ${statsContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'Relatório Financeiro',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateVisitorsReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Visitantes', documentId);
-
-    this.addSectionTitle('Controle de Acesso');
-    this.checkPageSpace(30);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFont('helvetica', 'normal');
     
-    const visitorStats = [
-      `Total de visitantes: ${data.visitors || 0}`,
-      `Período: ${data.period || 'Atual'}`
-    ];
+    let statsContent = `
+      <div class="stats">
+        <p>Total de visitantes: ${data.visitors || 0}</p>
+        <p>Período: ${data.period || 'Atual'}</p>
+      </div>
+    `;
 
-    visitorStats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 10));
-    });
-    this.updateCurrentY(30);
-
-    this.addStatisticsCards(data);
-
+    let tableContent = '';
     if (data.detailedVisitors && data.detailedVisitors.length > 0) {
-      this.addSectionTitle('Lista de Visitantes');
-      this.checkPageSpace(100);
-      
-      const tableData = [
-        ['Nome', 'Apartamento', 'Data/Hora', 'Finalidade', 'Status']
-      ];
-      
-      data.detailedVisitors.forEach((visitor) => {
-        const residentApt = visitor.residents.apartment_number;
-        const visitDateTime = `${format(new Date(visitor.visit_date), 'dd/MM/yyyy')} ${visitor.visit_time || ''}`;
-        const status = visitor.approved ? 'Aprovado' : 'Pendente';
-        
-        tableData.push([
-          visitor.name,
-          residentApt,
-          visitDateTime,
-          visitor.purpose || 'N/A',
-          status
-        ]);
-      });
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'striped',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
-      } catch (error) {
-        console.error('Error creating visitors table:', error);
-        this.updateCurrentY(100);
-      }
+      tableContent = `
+        <div class="section-title">Lista de Visitantes</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Apartamento</th>
+              <th>Data/Hora</th>
+              <th>Finalidade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.detailedVisitors.map(visitor => {
+              const residentApt = visitor.residents.apartment_number;
+              const visitDateTime = `${format(new Date(visitor.visit_date), 'dd/MM/yyyy')} ${visitor.visit_time || ''}`;
+              const status = visitor.approved ? 'Aprovado' : 'Pendente';
+              
+              return `
+                <tr>
+                  <td>${visitor.name}</td>
+                  <td>${residentApt}</td>
+                  <td>${visitDateTime}</td>
+                  <td>${visitor.purpose || 'N/A'}</td>
+                  <td>${status}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Controle de Acesso</div>
+      ${statsContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'Relatório de Visitantes',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateAnnouncementsReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Anúncios', documentId);
-
-    this.addSectionTitle('Comunicações');
-    this.checkPageSpace(30);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFont('helvetica', 'normal');
     
-    const announcementStats = [
-      `Total de anúncios: ${data.announcements || 0}`,
-      `Período: ${data.period || 'Atual'}`
-    ];
+    let statsContent = `
+      <div class="stats">
+        <p>Total de anúncios: ${data.announcements || 0}</p>
+        <p>Período: ${data.period || 'Atual'}</p>
+      </div>
+    `;
 
-    announcementStats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 10));
-    });
-    this.updateCurrentY(30);
-
-    this.addStatisticsCards(data);
-
+    let tableContent = '';
     if (data.detailedAnnouncements && data.detailedAnnouncements.length > 0) {
-      this.addSectionTitle('Lista de Anúncios');
-      this.checkPageSpace(100);
-      
-      const tableData = [
-        ['Título', 'Data', 'Status', 'Urgente', 'Autor']
-      ];
-      
-      data.detailedAnnouncements.forEach((announcement) => {
-        const author = `${announcement.profiles.first_name} ${announcement.profiles.last_name}`;
-        const createdDate = format(new Date(announcement.created_at), 'dd/MM/yyyy');
-        const status = announcement.published ? 'Publicado' : 'Rascunho';
-        const urgent = announcement.is_urgent ? 'Sim' : 'Não';
-        
-        tableData.push([
-          announcement.title,
-          createdDate,
-          status,
-          urgent,
-          author
-        ]);
-      });
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'striped',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
-      } catch (error) {
-        console.error('Error creating announcements table:', error);
-        this.updateCurrentY(100);
-      }
+      tableContent = `
+        <div class="section-title">Lista de Anúncios</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Urgente</th>
+              <th>Autor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.detailedAnnouncements.map(announcement => {
+              const author = `${announcement.profiles.first_name} ${announcement.profiles.last_name}`;
+              const createdDate = format(new Date(announcement.created_at), 'dd/MM/yyyy');
+              const status = announcement.published ? 'Publicado' : 'Rascunho';
+              const urgent = announcement.is_urgent ? 'Sim' : 'Não';
+              
+              return `
+                <tr>
+                  <td>${announcement.title}</td>
+                  <td>${createdDate}</td>
+                  <td>${status}</td>
+                  <td>${urgent}</td>
+                  <td>${author}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Comunicações</div>
+      ${statsContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'Relatório de Anúncios',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateReservationsReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Reservas', documentId);
-
-    this.addSectionTitle('Reservas de Espaços');
-    this.checkPageSpace(30);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFont('helvetica', 'normal');
     
-    const reservationStats = [
-      `Total de reservas: ${data.detailedReservations?.length || 0}`,
-      `Período: ${data.period || 'Atual'}`
-    ];
+    let statsContent = `
+      <div class="stats">
+        <p>Total de reservas: ${data.detailedReservations?.length || 0}</p>
+        <p>Período: ${data.period || 'Atual'}</p>
+      </div>
+    `;
 
-    reservationStats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 10));
-    });
-    this.updateCurrentY(30);
-
-    this.addStatisticsCards(data);
-
+    let tableContent = '';
     if (data.detailedReservations && data.detailedReservations.length > 0) {
-      this.addSectionTitle('Lista de Reservas');
-      this.checkPageSpace(100);
-      
-      const tableData = [
-        ['Espaço', 'Apartamento', 'Data', 'Horário', 'Status']
-      ];
-      
-      data.detailedReservations.forEach((reservation) => {
-        const residentApt = reservation.residents.apartment_number;
-        const reservationDate = format(new Date(reservation.reservation_date), 'dd/MM/yyyy');
-        const timeSlot = `${reservation.start_time} - ${reservation.end_time}`;
-        const status = reservation.approved ? 'Aprovado' : 'Pendente';
-        
-        tableData.push([
-          reservation.space_name,
-          residentApt,
-          reservationDate,
-          timeSlot,
-          status
-        ]);
-      });
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'striped',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
-      } catch (error) {
-        console.error('Error creating reservations table:', error);
-        this.updateCurrentY(100);
-      }
+      tableContent = `
+        <div class="section-title">Lista de Reservas</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Espaço</th>
+              <th>Apartamento</th>
+              <th>Data</th>
+              <th>Horário</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.detailedReservations.map(reservation => {
+              const residentApt = reservation.residents.apartment_number;
+              const reservationDate = format(new Date(reservation.reservation_date), 'dd/MM/yyyy');
+              const timeSlot = `${reservation.start_time} - ${reservation.end_time}`;
+              const status = reservation.approved ? 'Aprovado' : 'Pendente';
+              
+              return `
+                <tr>
+                  <td>${reservation.space_name}</td>
+                  <td>${residentApt}</td>
+                  <td>${reservationDate}</td>
+                  <td>${timeSlot}</td>
+                  <td>${status}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Reservas de Espaços</div>
+      ${statsContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'Relatório de Reservas',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateComprehensiveReport(data: ReportData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'RELATÓRIO COMPLETO', documentId);
-
-    this.addSectionTitle('Visão Geral');
-    this.checkPageSpace(30);
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFont('helvetica', 'normal');
     
-    const comprehensiveStats = [
-      `Período: ${data.period || 'Atual'}`,
-      `Endereço: ${data.condominiumInfo?.address || 'N/A'}`
-    ];
+    let statsContent = `
+      <div class="stats">
+        <p>Período: ${data.period || 'Atual'}</p>
+        <p>Endereço: ${data.condominiumInfo?.address || 'N/A'}</p>
+      </div>
+    `;
 
-    comprehensiveStats.forEach((stat, index) => {
-      this.doc.text(stat, this.margin, this.currentY + (index * 10));
-    });
-    this.updateCurrentY(30);
-
-    this.addStatisticsCards(data);
-
-    // Add all sections for comprehensive report
+    let paymentsContent = '';
     if (data.payments) {
-      this.addSectionTitle('Estatísticas de Pagamentos');
-      this.checkPageSpace(80);
-
-      const paymentTableData = [
-        ['Status', 'Quantidade', 'Percentual'],
-        ['Total', data.payments.total.toString(), '100%'],
-        ['Pagos', data.payments.paid.toString(), `${Math.round((data.payments.paid / data.payments.total) * 100)}%`],
-        ['Pendentes', data.payments.pending.toString(), `${Math.round((data.payments.pending / data.payments.total) * 100)}%`],
-        ['Em Atraso', data.payments.overdue.toString(), `${Math.round((data.payments.overdue / data.payments.total) * 100)}%`]
-      ];
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [paymentTableData[0]],
-          body: paymentTableData.slice(1),
-          theme: 'grid',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 11,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 11,
-            textColor: [0, 0, 0]
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-      } catch (error) {
-        console.error('Error creating payment statistics table:', error);
-        this.updateCurrentY(80);
-      }
+      paymentsContent = `
+        <div class="section-title">Estatísticas de Pagamentos</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Quantidade</th>
+              <th>Percentual</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Total</td><td>${data.payments.total}</td><td>100%</td></tr>
+            <tr><td>Pagos</td><td>${data.payments.paid}</td><td>${Math.round((data.payments.paid / data.payments.total) * 100)}%</td></tr>
+            <tr><td>Pendentes</td><td>${data.payments.pending}</td><td>${Math.round((data.payments.pending / data.payments.total) * 100)}%</td></tr>
+            <tr><td>Em Atraso</td><td>${data.payments.overdue}</td><td>${Math.round((data.payments.overdue / data.payments.total) * 100)}%</td></tr>
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Visão Geral</div>
+      ${statsContent}
+      ${paymentsContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      'RELATÓRIO COMPLETO',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
   async generateServiceProviderReceipt(data: ReceiptData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'RECIBO DE PAGAMENTO - PRESTADOR DE SERVIÇOS', documentId);
-
-    // Receipt details in table format
-    this.addSectionTitle('DADOS DO PRESTADOR DE SERVIÇOS');
-    this.checkPageSpace(80);
     
-    const prestadorInfo = [
-      ['Nome/Razão Social:', data.recipient.name],
-      ['NIF:', data.recipient.nif || 'N/A'],
-      ['Endereço:', data.recipient.address || 'N/A'],
-      ['Valor Total:', `${data.amount.toFixed(2)} ${data.currency}`]
-    ];
+    const content = `
+      <div class="section-title">DADOS DO PRESTADOR DE SERVIÇOS</div>
+      <table>
+        <tbody>
+          <tr><td><strong>Nome/Razão Social:</strong></td><td>${data.recipient.name}</td></tr>
+          <tr><td><strong>NIF:</strong></td><td>${data.recipient.nif || 'N/A'}</td></tr>
+          <tr><td><strong>Endereço:</strong></td><td>${data.recipient.address || 'N/A'}</td></tr>
+          <tr><td><strong>Valor Total:</strong></td><td>${data.amount.toFixed(2)} ${data.currency}</td></tr>
+        </tbody>
+      </table>
+    `;
 
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        body: prestadorInfo,
-        theme: 'grid',
-        styles: {
-          fontSize: 12,
-          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
-        },
-        columnStyles: {
-          0: { 
-            fontStyle: 'bold', 
-            fillColor: [244, 244, 244], 
-            cellWidth: 50
-          },
-          1: { 
-            cellWidth: 120
-          }
-        },
-        margin: { left: this.margin, right: this.margin },
-        pageBreak: 'auto'
-      });
+    const html = await this.generateTCasaHTMLTemplate(
+      'RECIBO DE PAGAMENTO - PRESTADOR DE SERVIÇOS',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
 
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 60;
-    } catch (error) {
-      console.error('Error creating service provider table:', error);
-      this.updateCurrentY(60);
-    }
-
-    await this.addTCasaFooter(documentId);
+    this.htmlToJsPDF(html);
   }
 
   async generateResidentReceipt(data: ReceiptData): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'COMPROVATIVO DE PAGAMENTO - RESIDENTE', documentId);
-
-    // Receipt details
-    this.addSectionTitle('DETALHES DO PAGAMENTO');
-    this.checkPageSpace(80);
     
-    const residentInfo = [
-      ['Residente:', data.recipient.name],
-      ['Apartamento:', data.recipient.apartment || 'N/A'],
-      ['Descrição:', data.description],
-      ['Valor Pago:', `${data.amount.toFixed(2)} ${data.currency}`],
-      ['Data de Pagamento:', data.paymentDate || data.date]
-    ];
+    const content = `
+      <div class="section-title">DETALHES DO PAGAMENTO</div>
+      <table>
+        <tbody>
+          <tr><td><strong>Residente:</strong></td><td>${data.recipient.name}</td></tr>
+          <tr><td><strong>Apartamento:</strong></td><td>${data.recipient.apartment || 'N/A'}</td></tr>
+          <tr><td><strong>Descrição:</strong></td><td>${data.description}</td></tr>
+          <tr><td><strong>Valor Pago:</strong></td><td>${data.amount.toFixed(2)} ${data.currency}</td></tr>
+          <tr><td><strong>Data de Pagamento:</strong></td><td>${data.paymentDate || data.date}</td></tr>
+        </tbody>
+      </table>
+    `;
 
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        body: residentInfo,
-        theme: 'grid',
-        styles: {
-          fontSize: 12,
-          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
-        },
-        columnStyles: {
-          0: { 
-            fontStyle: 'bold', 
-            fillColor: [244, 244, 244], 
-            cellWidth: 50
-          },
-          1: { 
-            cellWidth: 120
-          }
-        },
-        margin: { left: this.margin, right: this.margin },
-        pageBreak: 'auto'
-      });
+    const html = await this.generateTCasaHTMLTemplate(
+      'COMPROVATIVO DE PAGAMENTO - RESIDENTE',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
 
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-    } catch (error) {
-      console.error('Error creating resident receipt table:', error);
-      this.updateCurrentY(80);
-    }
-
-    await this.addTCasaFooter(documentId);
+    this.htmlToJsPDF(html);
   }
 
   async generateServiceAcceptanceReport(data: ReceiptData & { 
@@ -934,51 +758,29 @@ export class ReportGenerator {
     observations?: string 
   }): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, 'TERMO DE ACEITAÇÃO DE SERVIÇO CONCLUÍDO', documentId);
-
-    // Service acceptance details
-    this.addSectionTitle('DADOS DO SERVIÇO');
-    this.checkPageSpace(80);
     
-    const serviceInfo = [
-      ['Prestador:', data.recipient.name],
-      ['Descrição:', data.description],
-      ['Data de Início:', data.startDate || 'N/A'],
-      ['Data de Conclusão:', data.completionDate || 'N/A'],
-      ['Valor Total:', `${data.amount.toFixed(2)} ${data.currency}`],
-      ['Observações:', data.observations || 'Serviço aceito e aprovado']
-    ];
+    const content = `
+      <div class="section-title">DADOS DO SERVIÇO</div>
+      <table>
+        <tbody>
+          <tr><td><strong>Prestador:</strong></td><td>${data.recipient.name}</td></tr>
+          <tr><td><strong>Descrição:</strong></td><td>${data.description}</td></tr>
+          <tr><td><strong>Data de Início:</strong></td><td>${data.startDate || 'N/A'}</td></tr>
+          <tr><td><strong>Data de Conclusão:</strong></td><td>${data.completionDate || 'N/A'}</td></tr>
+          <tr><td><strong>Valor Total:</strong></td><td>${data.amount.toFixed(2)} ${data.currency}</td></tr>
+          <tr><td><strong>Observações:</strong></td><td>${data.observations || 'Serviço aceito e aprovado'}</td></tr>
+        </tbody>
+      </table>
+    `;
 
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        body: serviceInfo,
-        theme: 'grid',
-        styles: {
-          fontSize: 12,
-          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
-        },
-        columnStyles: {
-          0: { 
-            fontStyle: 'bold', 
-            fillColor: [244, 244, 244], 
-            cellWidth: 50
-          },
-          1: { 
-            cellWidth: 120
-          }
-        },
-        margin: { left: this.margin, right: this.margin },
-        pageBreak: 'auto'
-      });
+    const html = await this.generateTCasaHTMLTemplate(
+      'TERMO DE ACEITAÇÃO DE SERVIÇO CONCLUÍDO',
+      data.condominiumInfo,
+      documentId,
+      content
+    );
 
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-    } catch (error) {
-      console.error('Error creating service acceptance table:', error);
-      this.updateCurrentY(80);
-    }
-
-    await this.addTCasaFooter(documentId);
+    this.htmlToJsPDF(html);
   }
 
   async generateContributionStatusReport(data: {
@@ -1009,14 +811,7 @@ export class ReportGenerator {
     months: string[];
   }): Promise<void> {
     const documentId = this.generateDocumentId();
-    this.addTCasaHeader(data.condominiumInfo, `${data.title} - ${data.year}`, documentId);
-
-    // Summary statistics
-    this.checkPageSpace(80);
-    const cardWidth = (this.pageWidth - this.margin * 2 - 30) / 4;
-    const cardHeight = 30;
-    let startX = this.margin;
-
+    
     const formatCurrency = (amount: number) => {
       return new Intl.NumberFormat('pt-AO', {
         style: 'currency',
@@ -1024,91 +819,64 @@ export class ReportGenerator {
       }).format(amount);
     };
 
-    const cards = [
-      { title: 'Total Pago', value: formatCurrency(data.summary.totalPaid), color: [40, 167, 69] },
-      { title: 'Total em Dívida', value: formatCurrency(data.summary.totalDebt), color: [220, 53, 69] },
-      { title: 'Total Apartamentos', value: data.summary.totalApartments.toString(), color: [13, 110, 253] },
-      { title: 'Taxa Ocupação', value: `${data.summary.occupancyRate}%`, color: [111, 66, 193] }
-    ];
+    let summaryContent = `
+      <div class="stats">
+        <p>Total Pago: ${formatCurrency(data.summary.totalPaid)}</p>
+        <p>Total em Dívida: ${formatCurrency(data.summary.totalDebt)}</p>
+        <p>Total Apartamentos: ${data.summary.totalApartments}</p>
+        <p>Taxa Ocupação: ${data.summary.occupancyRate}%</p>
+      </div>
+    `;
 
-    cards.forEach((card, index) => {
-      const x = startX + (cardWidth + 10) * index;
-      
-      this.doc.setFillColor(card.color[0], card.color[1], card.color[2]);
-      this.doc.roundedRect(x, this.currentY, cardWidth, cardHeight, 3, 3, 'F');
-      
-      this.doc.setTextColor(255, 255, 255);
-      this.doc.setFontSize(10);
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.text(card.title, x + cardWidth/2, this.currentY + 12, { align: 'center' });
-      this.doc.text(card.value, x + cardWidth/2, this.currentY + 22, { align: 'center' });
-    });
-
-    this.updateCurrentY(cardHeight + 30);
-
-    // Detailed contribution table
+    let tableContent = '';
     if (data.contributionData && data.contributionData.length > 0) {
-      this.addSectionTitle('Detalhamento por Apartamento');
-      this.checkPageSpace(100);
-      
-      const headers = ['Apt.', 'Residente', 'Total Pago', 'Em Dívida', ...data.months];
-      const tableData = [headers];
-      
-      data.contributionData.forEach((item) => {
-        const row = [
-          item.apartment,
-          item.resident,
-          formatCurrency(item.totalPaid),
-          formatCurrency(item.totalDebt),
-          ...item.monthlyStatus.map(m => {
-            switch(m.status) {
-              case 'paid': return 'P';
-              case 'pending': return 'Pe';
-              case 'overdue': return 'A';
-              default: return '-';
-            }
-          })
-        ];
-        tableData.push(row);
-      });
-
-      try {
-        autoTable(this.doc, {
-          startY: this.currentY,
-          head: [tableData[0]],
-          body: tableData.slice(1),
-          theme: 'grid',
-          headStyles: {
-            fillColor: [244, 244, 244],
-            textColor: [0, 0, 0],
-            fontSize: 8,
-            fontStyle: 'bold'
-          },
-          bodyStyles: {
-            fontSize: 8,
-            textColor: [0, 0, 0]
-          },
-          columnStyles: {
-            0: { cellWidth: 15 },
-            1: { cellWidth: 35 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 25 }
-          },
-          margin: { left: this.margin, right: this.margin },
-          pageBreak: 'auto'
-        });
-
-        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
-      } catch (error) {
-        console.error('Error creating contribution table:', error);
-        this.updateCurrentY(100);
-      }
+      tableContent = `
+        <div class="section-title">Detalhes por Apartamento</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Apto</th>
+              <th>Residente</th>
+              <th>Total Pago</th>
+              <th>Total Dívida</th>
+              ${data.months.map(month => `<th>${month}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${data.contributionData.map(contribution => `
+              <tr>
+                <td>${contribution.apartment}</td>
+                <td>${contribution.resident}</td>
+                <td>${formatCurrency(contribution.totalPaid)}</td>
+                <td>${formatCurrency(contribution.totalDebt)}</td>
+                ${data.months.map(month => {
+                  const monthStatus = contribution.monthlyStatus.find(status => status.month === month);
+                  return `<td>${monthStatus?.status || 'N/A'}</td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
-    await this.addTCasaFooter(documentId);
+    const content = `
+      <div class="section-title">Resumo do Ano ${data.year}</div>
+      ${summaryContent}
+      ${tableContent}
+    `;
+
+    const html = await this.generateTCasaHTMLTemplate(
+      `${data.title} - ${data.year}`,
+      data.condominiumInfo,
+      documentId,
+      content
+    );
+
+    this.htmlToJsPDF(html);
   }
 
-  save(filename: string): void {
+  save(filename: string) {
     this.doc.save(filename);
   }
 }
