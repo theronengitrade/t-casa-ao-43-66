@@ -190,7 +190,7 @@ export class ReportGenerator {
     this.pageWidth = this.doc.internal.pageSize.width;
     this.margin = 20;
     this.currentY = this.margin;
-    this.footerHeight = 80; // Increased for QR code footer
+    this.footerHeight = 60; // Reduced footer height for better spacing
   }
 
   private generateDocumentId(): string {
@@ -272,7 +272,7 @@ export class ReportGenerator {
   }
 
   private async addTCasaFooter(documentId?: string): Promise<void> {
-    const footerY = this.pageHeight - 70;
+    const footerY = this.pageHeight - 60;
     const docId = documentId || this.generateDocumentId();
     const currentDateTime = new Date().toISOString();
     const systemVersion = '2.5.1';
@@ -287,23 +287,38 @@ export class ReportGenerator {
     // Generate QR Code
     const qrCodeDataUrl = await this.generateQRCode(verificationUrl);
 
-    // Footer text
-    this.doc.setFontSize(10);
+    // Footer background area
+    this.doc.setFillColor(248, 249, 250);
+    this.doc.rect(0, footerY - 5, this.pageWidth, 60, 'F');
+    
+    // Top border line
+    this.doc.setDrawColor(220, 220, 220);
+    this.doc.setLineWidth(0.5);
+    this.doc.line(0, footerY - 5, this.pageWidth, footerY - 5);
+
+    // Footer text styling
+    this.doc.setFontSize(8);
     this.doc.setTextColor(108, 117, 125);
     this.doc.setFont('helvetica', 'normal');
     
+    // Line 1: Document info
     const footerLine1 = `Documento gerado automaticamente por T-Casa ${systemVersion} · Documento ID: ${docId}`;
-    const footerLine2 = `Hash SHA256: ${documentHash} · Verifique autenticidade em: ${verificationUrl}`;
+    this.doc.text(footerLine1, this.pageWidth / 2, footerY + 8, { align: 'center' });
     
-    this.doc.text(footerLine1, this.pageWidth / 2, footerY + 10, { align: 'center' });
-    this.doc.text(footerLine2, this.pageWidth / 2, footerY + 20, { align: 'center' });
+    // Line 2: Hash and verification URL (split if too long)
+    const hashText = `Hash SHA256: ${documentHash}`;
+    const verifyText = `Verifique autenticidade em: ${verificationUrl}`;
+    
+    this.doc.text(hashText, this.pageWidth / 2, footerY + 16, { align: 'center' });
+    this.doc.text(verifyText, this.pageWidth / 2, footerY + 24, { align: 'center' });
 
     // Add QR Code if generated successfully
     if (qrCodeDataUrl) {
       try {
-        const qrX = (this.pageWidth - 25) / 2;
-        const qrY = footerY + 25;
-        this.doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, 25, 25);
+        const qrSize = 20;
+        const qrX = (this.pageWidth - qrSize) / 2;
+        const qrY = footerY + 30;
+        this.doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
       } catch (error) {
         console.error('Error adding QR code to PDF:', error);
       }
