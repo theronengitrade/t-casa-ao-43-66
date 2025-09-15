@@ -383,25 +383,25 @@ export function ReportsManagement() {
       switch (reportType) {
         case 'Moradores':
           console.log('Generating residents report with data:', enhancedData.detailedResidents?.length, 'residents');
-          reportGenerator.generateResidentsReport(enhancedData);
+          await reportGenerator.generateResidentsReport(enhancedData);
           break;
         case 'Financeiro':
-          reportGenerator.generateFinancialReport(enhancedData);
+          await reportGenerator.generateFinancialReport(enhancedData);
           break;
         case 'Visitantes':
-          reportGenerator.generateVisitorsReport(enhancedData);
+          await reportGenerator.generateVisitorsReport(enhancedData);
           break;
         case 'Anúncios':
-          reportGenerator.generateAnnouncementsReport(enhancedData);
+          await reportGenerator.generateAnnouncementsReport(enhancedData);
           break;
         case 'Reservas de Espaços':
-          reportGenerator.generateReservationsReport(enhancedData);
+          await reportGenerator.generateReservationsReport(enhancedData);
           break;
         case 'Completo':
-          reportGenerator.generateComprehensiveReport(enhancedData);
+          await reportGenerator.generateComprehensiveReport(enhancedData);
           break;
         default:
-          reportGenerator.generateComprehensiveReport(enhancedData);
+          await reportGenerator.generateComprehensiveReport(enhancedData);
       }
 
       reportGenerator.save(filename);

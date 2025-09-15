@@ -2,6 +2,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import QRCode from 'qrcode';
+import CryptoJS from 'crypto-js';
 
 // Extend jsPDF type to include autoTable
 declare module 'jspdf' {
@@ -50,7 +52,6 @@ export interface ReportData {
     receita_atual: number;
     remanescente: number;
   };
-  // Detailed data arrays
   detailedResidents?: Array<{
     id: string;
     apartment_number: string;
@@ -189,7 +190,31 @@ export class ReportGenerator {
     this.pageWidth = this.doc.internal.pageSize.width;
     this.margin = 20;
     this.currentY = this.margin;
-    this.footerHeight = 45; // Updated footer height
+    this.footerHeight = 80; // Increased for QR code footer
+  }
+
+  private generateDocumentId(): string {
+    return 'TCASA-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+  }
+
+  private generateDocumentHash(content: string): string {
+    return CryptoJS.SHA256(content).toString().substring(0, 16).toUpperCase();
+  }
+
+  private async generateQRCode(url: string): Promise<string> {
+    try {
+      return await QRCode.toDataURL(url, {
+        width: 100,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      return '';
+    }
   }
 
   private checkPageSpace(requiredHeight: number): void {
@@ -199,95 +224,94 @@ export class ReportGenerator {
     }
   }
 
-  private addNewPage(): void {
-    this.addProfessionalFooter();
+  private async addNewPage(): Promise<void> {
+    await this.addTCasaFooter();
     this.doc.addPage();
     this.currentY = this.margin;
   }
 
-  private updateCurrentY(additionalSpace: number = 0): void {
-    // Always ensure minimum spacing and check for page overflow
+  private async updateCurrentY(additionalSpace: number = 0): Promise<void> {
     this.currentY += additionalSpace;
     if (this.currentY > this.pageHeight - this.footerHeight - 20) {
-      this.addNewPage();
+      await this.addNewPage();
     }
   }
 
-  private addProfessionalHeader(condominiumInfo: any, reportTitle: string) {
-    // Professional header background
-    this.doc.setFillColor(245, 247, 250);
-    this.doc.rect(0, 0, this.pageWidth, 70, 'F');
+  private addTCasaHeader(condominiumInfo: any, reportTitle: string, documentId: string) {
+    // Header background
+    this.doc.setFillColor(248, 249, 250);
+    this.doc.rect(0, 0, this.pageWidth, 50, 'F');
     
-    // Reset to fixed header positions to avoid overlap
-    const headerStartY = 10;
+    // Main title
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(20);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('T-CASA — Relatório', this.pageWidth / 2, 20, { align: 'center' });
     
-    // Main logo area with gradient effect
-    this.doc.setFillColor(41, 128, 185);
-    this.doc.roundedRect(this.margin, headerStartY, 50, 20, 3, 3, 'F');
-    
-    // Logo text
-    this.doc.setTextColor(255, 255, 255);
+    // Condominium info
     this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('T-CASA', this.margin + 25, headerStartY + 12, { align: 'center' });
-
-    // Date and time (right side, top)
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(108, 117, 125);
     this.doc.setFont('helvetica', 'normal');
-    const currentDateTime = format(new Date(), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt });
-    this.doc.text(`Gerado em: ${currentDateTime}`, this.pageWidth - this.margin, headerStartY + 5, { align: 'right' });
+    const condominiumText = `Condomínio: ${condominiumInfo?.name || 'N/A'} · ID: ${documentId}`;
+    this.doc.text(condominiumText, this.pageWidth / 2, 35, { align: 'center' });
 
-    // Condominium name - center, below logo line
-    this.doc.setTextColor(33, 37, 41);
-    this.doc.setFontSize(18);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text(condominiumInfo?.name || 'Condomínio', this.pageWidth / 2, headerStartY + 20, { align: 'center' });
+    // Meta information
+    const currentDateTime = new Date().toISOString();
+    const systemVersion = '2.5.1';
+    this.doc.setFontSize(11);
+    this.doc.setTextColor(108, 117, 125);
+    const metaText = `Emitido em: ${currentDateTime} · Documento ID: ${documentId} · Versão do Sistema: ${systemVersion}`;
+    this.doc.text(metaText, this.pageWidth / 2, 55, { align: 'center' });
 
-    // Address line - center, below name
-    if (condominiumInfo?.address) {
-      this.doc.setFontSize(9);
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.setTextColor(108, 117, 125);
-      this.doc.text(condominiumInfo.address, this.pageWidth / 2, headerStartY + 30, { align: 'center' });
-    }
-
-    // Contact info (right side, below date)
-    if (condominiumInfo?.phone || condominiumInfo?.email) {
-      const contact = [];
-      if (condominiumInfo.phone) contact.push(`Tel: ${condominiumInfo.phone}`);
-      if (condominiumInfo.email) contact.push(`Email: ${condominiumInfo.email}`);
-      
-      this.doc.setFontSize(8);
-      this.doc.text(contact.join(' | '), this.pageWidth - this.margin, headerStartY + 15, { align: 'right' });
-    }
-
-    // Report title - center, prominently placed
-    this.doc.setFontSize(14);
+    // Report title
+    this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(220, 53, 69);
-    this.doc.text(reportTitle, this.pageWidth / 2, headerStartY + 45, { align: 'center' });
+    this.doc.text(reportTitle, this.pageWidth / 2, 75, { align: 'center' });
 
-    // Update currentY to after header
-    this.currentY = headerStartY + 55;
-    
-    // Professional separator with subtle shadow effect
-    this.doc.setDrawColor(220, 220, 220);
-    this.doc.setLineWidth(0.5);
-    this.doc.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    
-    this.doc.setDrawColor(245, 245, 245);
-    this.doc.line(this.margin, this.currentY + 1, this.pageWidth - this.margin, this.currentY + 1);
-    
-    this.currentY += 15;
+    this.currentY = 85;
   }
 
-  private addHeader(condominiumName: string, reportTitle: string) {
-    this.addProfessionalHeader({ name: condominiumName }, reportTitle);
+  private async addTCasaFooter(documentId?: string): Promise<void> {
+    const footerY = this.pageHeight - 70;
+    const docId = documentId || this.generateDocumentId();
+    const currentDateTime = new Date().toISOString();
+    const systemVersion = '2.5.1';
+    
+    // Generate content for hash
+    const contentForHash = `${docId}-${currentDateTime}-${systemVersion}`;
+    const documentHash = this.generateDocumentHash(contentForHash);
+    
+    // Verification URL
+    const verificationUrl = `https://tcasa.ao/verify?doc=${docId}`;
+    
+    // Generate QR Code
+    const qrCodeDataUrl = await this.generateQRCode(verificationUrl);
+
+    // Footer text
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(108, 117, 125);
+    this.doc.setFont('helvetica', 'normal');
+    
+    const footerLine1 = `Documento gerado automaticamente por T-Casa ${systemVersion} · Documento ID: ${docId}`;
+    const footerLine2 = `Hash SHA256: ${documentHash} · Verifique autenticidade em: ${verificationUrl}`;
+    
+    this.doc.text(footerLine1, this.pageWidth / 2, footerY + 10, { align: 'center' });
+    this.doc.text(footerLine2, this.pageWidth / 2, footerY + 20, { align: 'center' });
+
+    // Add QR Code if generated successfully
+    if (qrCodeDataUrl) {
+      try {
+        const qrX = (this.pageWidth - 25) / 2;
+        const qrY = footerY + 25;
+        this.doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, 25, 25);
+      } catch (error) {
+        console.error('Error adding QR code to PDF:', error);
+      }
+    }
   }
 
   private addSectionTitle(title: string) {
-    this.checkPageSpace(30); // Ensure space for title and some content
+    this.checkPageSpace(30);
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(41, 128, 185);
@@ -296,7 +320,7 @@ export class ReportGenerator {
   }
 
   private addStatisticsCards(data: ReportData) {
-    this.checkPageSpace(60); // Ensure space for cards
+    this.checkPageSpace(60);
     
     const cardWidth = (this.pageWidth - this.margin * 2 - 30) / 4;
     const cardHeight = 30;
@@ -312,11 +336,9 @@ export class ReportGenerator {
     cards.forEach((card, index) => {
       const x = startX + (cardWidth + 10) * index;
       
-      // Card background
       this.doc.setFillColor(card.color[0], card.color[1], card.color[2]);
       this.doc.roundedRect(x, this.currentY, cardWidth, cardHeight, 3, 3, 'F');
       
-      // Card content
       this.doc.setTextColor(255, 255, 255);
       this.doc.setFontSize(18);
       this.doc.setFont('helvetica', 'bold');
@@ -330,241 +352,36 @@ export class ReportGenerator {
     this.updateCurrentY(cardHeight + 20);
   }
 
-  private addPaymentStatistics(payments: any) {
-    this.addSectionTitle('Estatísticas de Pagamentos');
-    this.checkPageSpace(80); // Ensure space for table
+  async generateResidentsReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Moradores', documentId);
 
-    const tableData = [
-      ['Status', 'Quantidade', 'Percentual'],
-      ['Total', payments.total.toString(), '100%'],
-      ['Pagos', payments.paid.toString(), `${Math.round((payments.paid / payments.total) * 100)}%`],
-      ['Pendentes', payments.pending.toString(), `${Math.round((payments.pending / payments.total) * 100)}%`],
-      ['Em Atraso', payments.overdue.toString(), `${Math.round((payments.overdue / payments.total) * 100)}%`]
-    ];
-
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        head: [tableData[0]],
-        body: tableData.slice(1),
-        theme: 'grid',
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [50, 50, 50]
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
-        },
-        margin: { left: this.margin, right: this.margin },
-        pageBreak: 'avoid'
-      });
-
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-    } catch (error) {
-      console.error('Error creating payment statistics table:', error);
-      this.updateCurrentY(80);
-    }
-  }
-
-  private addRemanescenteStatistics(remanescente: any) {
-    this.addSectionTitle('Gestão do Remanescente Anual');
-    this.checkPageSpace(80);
-
-    const tableData = [
-      ['Descrição', 'Valor', 'Percentual do Total'],
-      ['Receita do Ano', remanescente.receita_atual.toFixed(2), '100%'],
-      ['Despesas do Ano', remanescente.despesas_atual.toFixed(2), `${Math.round((remanescente.despesas_atual / remanescente.receita_atual) * 100)}%`],
-      ['Remanescente Anterior', remanescente.remanescente_total.toFixed(2), '-'],
-      ['Saldo Total Disponível', remanescente.saldo_disponivel.toFixed(2), 
-       remanescente.saldo_disponivel >= 0 ? 'Positivo' : 'Negativo']
-    ];
-
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        head: [tableData[0]],
-        body: tableData.slice(1),
-        theme: 'grid',
-        headStyles: {
-          fillColor: [76, 175, 80],
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [50, 50, 50]
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
-        },
-        margin: { 
-          left: this.margin, 
-          right: this.margin,
-          top: this.margin,
-          bottom: this.footerHeight 
-        },
-        pageBreak: 'auto'
-      });
-
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-    } catch (error) {
-      console.error('Error creating remanescente table:', error);
-      this.updateCurrentY(80);
-    }
-  }
-
-  private addExpenseSourceStatistics(expenses: any) {
-    this.addSectionTitle('Distribuição de Despesas por Fonte');
-    this.checkPageSpace(80);
-
-    const tableData = [
-      ['Fonte de Pagamento', 'Valor Gasto', 'Percentual'],
-      ['Receita Atual', expenses.receita_atual.toFixed(2), `${Math.round((expenses.receita_atual / expenses.total) * 100)}%`],
-      ['Remanescente', expenses.remanescente.toFixed(2), `${Math.round((expenses.remanescente / expenses.total) * 100)}%`],
-      ['Total', expenses.total.toFixed(2), '100%']
-    ];
-
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        head: [tableData[0]],
-        body: tableData.slice(1),
-        theme: 'grid',
-        headStyles: {
-          fillColor: [255, 152, 0],
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [50, 50, 50]
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
-        },
-        margin: { 
-          left: this.margin, 
-          right: this.margin,
-          top: this.margin,
-          bottom: this.footerHeight 
-        },
-        pageBreak: 'auto'
-      });
-
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
-    } catch (error) {
-      console.error('Error creating expense source table:', error);
-      this.updateCurrentY(80);
-    }
-  }
-
-  private addProfessionalFooter(condominiumInfo?: any) {
-    const footerY = this.pageHeight - 40; // Increased footer height
-    
-    // Footer background
-    this.doc.setFillColor(248, 249, 250);
-    this.doc.rect(0, footerY - 5, this.pageWidth, 40, 'F');
-    
-    // Top border
-    this.doc.setDrawColor(220, 220, 220);
-    this.doc.setLineWidth(0.5);
-    this.doc.line(this.margin, footerY - 5, this.pageWidth - this.margin, footerY - 5);
-    
-    this.doc.setFontSize(7);
-    this.doc.setTextColor(108, 117, 125);
-    this.doc.setFont('helvetica', 'normal');
-    
-    // Left side - System info (organized in left column)
-    this.doc.text('T-Casa - Sistema de Gestão', this.margin, footerY + 2);
-    this.doc.text('www.tcasa.ao', this.margin, footerY + 10);
-    if (condominiumInfo?.address) {
-      this.doc.setFontSize(6);
-      this.doc.text(`End: ${condominiumInfo.address}`, this.margin, footerY + 18);
-    }
-    
-    // Center - Document validation (organized in center column)
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setFontSize(8);
-    this.doc.text('DOCUMENTO VÁLIDO E AUTÊNTICO', this.pageWidth / 2, footerY + 2, { align: 'center' });
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(6);
-    this.doc.text('Gerado automaticamente pelo sistema', this.pageWidth / 2, footerY + 10, { align: 'center' });
-    this.doc.text('Não requer assinatura física para validação', this.pageWidth / 2, footerY + 18, { align: 'center' });
-    
-    // Right side - Page number and timestamp (organized in right column)
-    const pageInfo = `Página ${this.doc.getNumberOfPages()}`;
-    this.doc.setFontSize(7);
-    this.doc.text(pageInfo, this.pageWidth - this.margin, footerY + 2, { align: 'right' });
-    
-    const timestamp = format(new Date(), 'dd/MM/yyyy HH:mm:ss');
-    this.doc.setFontSize(6);
-    this.doc.text(`Emitido: ${timestamp}`, this.pageWidth - this.margin, footerY + 10, { align: 'right' });
-    
-    this.doc.text('Luanda, Angola', this.pageWidth - this.margin, footerY + 18, { align: 'right' });
-  }
-
-  private addFooter() {
-    this.addProfessionalFooter();
-  }
-
-  generateResidentsReport(data: ReportData): void {
-    console.log('=== NOVO FORMATO DE RELATÓRIO DE MORADORES ===');
-    this.addProfessionalHeader(data.condominiumInfo, 'Relatório Detalhado de Moradores');
-
-    // Contact information section if available
-    if (data.condominiumInfo?.phone || data.condominiumInfo?.email) {
-      this.checkPageSpace(30);
-      this.doc.setFillColor(240, 248, 255);
-      this.doc.roundedRect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 20, 3, 3, 'F');
-      this.doc.setFontSize(10);
-      this.doc.setTextColor(73, 80, 87);
-      this.doc.setFont('helvetica', 'normal');
-      
-      let contactText = 'Contato: ';
-      if (data.condominiumInfo?.phone) contactText += `Tel: ${data.condominiumInfo.phone}`;
-      if (data.condominiumInfo?.email) {
-        if (data.condominiumInfo?.phone) contactText += ' | ';
-        contactText += `Email: ${data.condominiumInfo.email}`;
-      }
-      
-      this.doc.text(contactText, this.pageWidth / 2, this.currentY + 12, { align: 'center' });
-      this.updateCurrentY(35);
-    }
-
+    // Statistics section
     this.addSectionTitle('Resumo Estatístico');
     this.checkPageSpace(50);
-    this.doc.setFontSize(11);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(33, 37, 41);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Total de moradores cadastrados: ${data.detailedResidents?.length || 0}`, this.margin, this.currentY);
-    this.updateCurrentY(8);
-    this.doc.text(`Taxa de ocupação estimada: ${data.occupancy || 0}%`, this.margin, this.currentY);
-    this.updateCurrentY(8);
-    this.doc.text(`Período do relatório: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(8);
-    
-    const owners = data.detailedResidents?.filter(r => r.is_owner).length || 0;
-    const tenants = (data.detailedResidents?.length || 0) - owners;
-    this.doc.text(`Proprietários: ${owners} | Inquilinos: ${tenants}`, this.margin, this.currentY);
-    this.updateCurrentY(25);
+    const stats = [
+      `Total de moradores cadastrados: ${data.detailedResidents?.length || 0}`,
+      `Taxa de ocupação estimada: ${data.occupancy || 0}%`,
+      `Período do relatório: ${data.period || 'Atual'}`
+    ];
 
+    stats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 8));
+    });
+    this.updateCurrentY(30);
+
+    // Statistics cards
     this.addStatisticsCards(data);
 
-    // NOVA ESTRUTURA DA TABELA DE MORADORES
+    // Lista Completa de Moradores
     if (data.detailedResidents && data.detailedResidents.length > 0) {
       this.addSectionTitle('Lista Completa de Moradores');
       this.checkPageSpace(100);
       
-      // NOVAS COLUNAS: Residente, Apartamento, Agregado/Estacionamento, Contacto, Tipo, Data de Entrada
       const tableData = [
         ['Residente', 'Apartamento', 'Agregado/Estacionamento', 'Contacto', 'Tipo', 'Data de Entrada']
       ];
@@ -595,14 +412,13 @@ export class ReportGenerator {
           ? format(new Date(resident.move_in_date), 'dd/MM/yyyy')
           : 'N/A';
 
-        // NOVA ORDEM DAS COLUNAS
         tableData.push([
-          fullName,              // Residente
-          resident.apartment_number, // Apartamento  
-          agregadoInfo,          // Agregado/Estacionamento
-          phone,                 // Contacto
-          type,                  // Tipo
-          moveInDate            // Data de Entrada
+          fullName,
+          resident.apartment_number,
+          agregadoInfo,
+          phone,
+          type,
+          moveInDate
         ]);
       });
 
@@ -613,25 +429,22 @@ export class ReportGenerator {
           body: tableData.slice(1),
           theme: 'striped',
           headStyles: {
-            fillColor: [41, 128, 185],
-            textColor: [255, 255, 255],
-            fontSize: 9,
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
             fontStyle: 'bold'
           },
           bodyStyles: {
-            fontSize: 8,
-            textColor: [33, 37, 41]
-          },
-          alternateRowStyles: {
-            fillColor: [248, 249, 250]
+            fontSize: 11,
+            textColor: [0, 0, 0]
           },
           columnStyles: {
-            0: { cellWidth: 45 },  // Residente
-            1: { cellWidth: 20 },  // Apartamento
-            2: { cellWidth: 35 },  // Agregado/Estacionamento
-            3: { cellWidth: 25 },  // Contacto
-            4: { cellWidth: 25 },  // Tipo
-            5: { cellWidth: 20 }   // Data de Entrada
+            0: { cellWidth: 45 },
+            1: { cellWidth: 20 },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 25 },
+            5: { cellWidth: 20 }
           },
           margin: { 
             left: this.margin, 
@@ -639,8 +452,7 @@ export class ReportGenerator {
             top: this.margin,
             bottom: this.footerHeight 
           },
-          pageBreak: 'auto',
-          rowPageBreak: 'avoid'
+          pageBreak: 'auto'
         });
 
         this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
@@ -648,148 +460,377 @@ export class ReportGenerator {
         console.error('Error creating table:', error);
         this.updateCurrentY(100);
       }
-    } else {
-      this.checkPageSpace(30);
-      this.doc.setFontSize(11);
-      this.doc.setTextColor(108, 117, 125);
-      this.doc.setFont('helvetica', 'italic');
-      this.doc.text('Nenhum morador cadastrado no período selecionado.', this.margin, this.currentY);
-      this.updateCurrentY(20);
     }
 
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
-  generateFinancialReport(data: ReportData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'Relatório Financeiro Detalhado');
+  async generateFinancialReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'Relatório Financeiro', documentId);
 
     this.addSectionTitle('Resumo Financeiro');
     this.checkPageSpace(30);
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Período: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(10);
-    this.doc.text(`Moeda: ${data.condominiumInfo?.currency || 'AOA'}`, this.margin, this.currentY);
-    this.updateCurrentY(20);
+    const financialStats = [
+      `Período: ${data.period || 'Atual'}`,
+      `Moeda: ${data.condominiumInfo?.currency || 'AOA'}`
+    ];
+
+    financialStats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 10));
+    });
+    this.updateCurrentY(30);
+
+    this.addStatisticsCards(data);
 
     if (data.remanescente) {
-      this.addRemanescenteStatistics(data.remanescente);
+      this.addSectionTitle('Gestão do Remanescente');
+      this.checkPageSpace(80);
+
+      const tableData = [
+        ['Descrição', 'Valor'],
+        ['Receita do Ano', data.remanescente.receita_atual.toFixed(2)],
+        ['Despesas do Ano', data.remanescente.despesas_atual.toFixed(2)],
+        ['Remanescente Total', data.remanescente.remanescente_total.toFixed(2)],
+        ['Saldo Disponível', data.remanescente.saldo_disponivel.toFixed(2)]
+      ];
+
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'grid',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 11,
+            textColor: [0, 0, 0]
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
+      } catch (error) {
+        console.error('Error creating financial table:', error);
+        this.updateCurrentY(80);
+      }
     }
 
-    if (data.payments) {
-      this.addPaymentStatistics(data.payments);
-    }
-
-    if (data.expenses) {
-      this.addExpenseSourceStatistics(data.expenses);
-    }
-
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
-  generateVisitorsReport(data: ReportData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'Relatório de Controle de Visitantes');
+  async generateVisitorsReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Visitantes', documentId);
 
     this.addSectionTitle('Controle de Acesso');
     this.checkPageSpace(30);
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Total de visitantes: ${data.visitors || 0}`, this.margin, this.currentY);
-    this.updateCurrentY(10);
-    this.doc.text(`Período: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(20);
+    const visitorStats = [
+      `Total de visitantes: ${data.visitors || 0}`,
+      `Período: ${data.period || 'Atual'}`
+    ];
+
+    visitorStats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 10));
+    });
+    this.updateCurrentY(30);
 
     this.addStatisticsCards(data);
-    this.addProfessionalFooter(data.condominiumInfo);
+
+    if (data.detailedVisitors && data.detailedVisitors.length > 0) {
+      this.addSectionTitle('Lista de Visitantes');
+      this.checkPageSpace(100);
+      
+      const tableData = [
+        ['Nome', 'Apartamento', 'Data/Hora', 'Finalidade', 'Status']
+      ];
+      
+      data.detailedVisitors.forEach((visitor) => {
+        const residentApt = visitor.residents.apartment_number;
+        const visitDateTime = `${format(new Date(visitor.visit_date), 'dd/MM/yyyy')} ${visitor.visit_time || ''}`;
+        const status = visitor.approved ? 'Aprovado' : 'Pendente';
+        
+        tableData.push([
+          visitor.name,
+          residentApt,
+          visitDateTime,
+          visitor.purpose || 'N/A',
+          status
+        ]);
+      });
+
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'striped',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 11,
+            textColor: [0, 0, 0]
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
+      } catch (error) {
+        console.error('Error creating visitors table:', error);
+        this.updateCurrentY(100);
+      }
+    }
+
+    await this.addTCasaFooter(documentId);
   }
 
-  generateAnnouncementsReport(data: ReportData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'Relatório de Comunicações e Anúncios');
+  async generateAnnouncementsReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Anúncios', documentId);
 
     this.addSectionTitle('Comunicações');
     this.checkPageSpace(30);
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Total de anúncios: ${data.announcements || 0}`, this.margin, this.currentY);
-    this.updateCurrentY(10);
-    this.doc.text(`Período: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(20);
+    const announcementStats = [
+      `Total de anúncios: ${data.announcements || 0}`,
+      `Período: ${data.period || 'Atual'}`
+    ];
+
+    announcementStats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 10));
+    });
+    this.updateCurrentY(30);
 
     this.addStatisticsCards(data);
-    this.addProfessionalFooter(data.condominiumInfo);
+
+    if (data.detailedAnnouncements && data.detailedAnnouncements.length > 0) {
+      this.addSectionTitle('Lista de Anúncios');
+      this.checkPageSpace(100);
+      
+      const tableData = [
+        ['Título', 'Data', 'Status', 'Urgente', 'Autor']
+      ];
+      
+      data.detailedAnnouncements.forEach((announcement) => {
+        const author = `${announcement.profiles.first_name} ${announcement.profiles.last_name}`;
+        const createdDate = format(new Date(announcement.created_at), 'dd/MM/yyyy');
+        const status = announcement.published ? 'Publicado' : 'Rascunho';
+        const urgent = announcement.is_urgent ? 'Sim' : 'Não';
+        
+        tableData.push([
+          announcement.title,
+          createdDate,
+          status,
+          urgent,
+          author
+        ]);
+      });
+
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'striped',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 11,
+            textColor: [0, 0, 0]
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
+      } catch (error) {
+        console.error('Error creating announcements table:', error);
+        this.updateCurrentY(100);
+      }
+    }
+
+    await this.addTCasaFooter(documentId);
   }
 
-  generateReservationsReport(data: ReportData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'Relatório de Reservas de Espaços');
+  async generateReservationsReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'Relatório de Reservas', documentId);
 
     this.addSectionTitle('Reservas de Espaços');
     this.checkPageSpace(30);
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Total de reservas: ${data.detailedReservations?.length || 0}`, this.margin, this.currentY);
-    this.updateCurrentY(10);
-    this.doc.text(`Período: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(20);
+    const reservationStats = [
+      `Total de reservas: ${data.detailedReservations?.length || 0}`,
+      `Período: ${data.period || 'Atual'}`
+    ];
+
+    reservationStats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 10));
+    });
+    this.updateCurrentY(30);
 
     this.addStatisticsCards(data);
-    this.addProfessionalFooter(data.condominiumInfo);
+
+    if (data.detailedReservations && data.detailedReservations.length > 0) {
+      this.addSectionTitle('Lista de Reservas');
+      this.checkPageSpace(100);
+      
+      const tableData = [
+        ['Espaço', 'Apartamento', 'Data', 'Horário', 'Status']
+      ];
+      
+      data.detailedReservations.forEach((reservation) => {
+        const residentApt = reservation.residents.apartment_number;
+        const reservationDate = format(new Date(reservation.reservation_date), 'dd/MM/yyyy');
+        const timeSlot = `${reservation.start_time} - ${reservation.end_time}`;
+        const status = reservation.approved ? 'Aprovado' : 'Pendente';
+        
+        tableData.push([
+          reservation.space_name,
+          residentApt,
+          reservationDate,
+          timeSlot,
+          status
+        ]);
+      });
+
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'striped',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 11,
+            textColor: [0, 0, 0]
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
+      } catch (error) {
+        console.error('Error creating reservations table:', error);
+        this.updateCurrentY(100);
+      }
+    }
+
+    await this.addTCasaFooter(documentId);
   }
 
-  generateComprehensiveReport(data: ReportData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'RELATÓRIO COMPLETO DE GESTÃO PREDIAL');
+  async generateComprehensiveReport(data: ReportData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'RELATÓRIO COMPLETO', documentId);
 
     this.addSectionTitle('Visão Geral');
     this.checkPageSpace(30);
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont('helvetica', 'normal');
     
-    this.doc.text(`Período: ${data.period || 'Atual'}`, this.margin, this.currentY);
-    this.updateCurrentY(10);
-    this.doc.text(`Endereço: ${data.condominiumInfo?.address || 'N/A'}`, this.margin, this.currentY);
-    this.updateCurrentY(20);
+    const comprehensiveStats = [
+      `Período: ${data.period || 'Atual'}`,
+      `Endereço: ${data.condominiumInfo?.address || 'N/A'}`
+    ];
+
+    comprehensiveStats.forEach((stat, index) => {
+      this.doc.text(stat, this.margin, this.currentY + (index * 10));
+    });
+    this.updateCurrentY(30);
 
     this.addStatisticsCards(data);
 
+    // Add all sections for comprehensive report
     if (data.payments) {
-      this.addPaymentStatistics(data.payments);
+      this.addSectionTitle('Estatísticas de Pagamentos');
+      this.checkPageSpace(80);
+
+      const paymentTableData = [
+        ['Status', 'Quantidade', 'Percentual'],
+        ['Total', data.payments.total.toString(), '100%'],
+        ['Pagos', data.payments.paid.toString(), `${Math.round((data.payments.paid / data.payments.total) * 100)}%`],
+        ['Pendentes', data.payments.pending.toString(), `${Math.round((data.payments.pending / data.payments.total) * 100)}%`],
+        ['Em Atraso', data.payments.overdue.toString(), `${Math.round((data.payments.overdue / data.payments.total) * 100)}%`]
+      ];
+
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [paymentTableData[0]],
+          body: paymentTableData.slice(1),
+          theme: 'grid',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 11,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 11,
+            textColor: [0, 0, 0]
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
+      } catch (error) {
+        console.error('Error creating payment statistics table:', error);
+        this.updateCurrentY(80);
+      }
     }
 
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
-  generateServiceProviderReceipt(data: ReceiptData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'RECIBO DE PAGAMENTO - PRESTADOR DE SERVIÇOS');
+  async generateServiceProviderReceipt(data: ReceiptData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'RECIBO DE PAGAMENTO - PRESTADOR DE SERVIÇOS', documentId);
 
-    // Receipt number highlight box
-    this.checkPageSpace(60);
-    this.doc.setFillColor(220, 53, 69);
-    this.doc.roundedRect(this.pageWidth - this.margin - 80, this.currentY, 80, 20, 3, 3, 'F');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('RECIBO Nº', this.pageWidth - this.margin - 40, this.currentY + 8, { align: 'center' });
-    this.doc.setFontSize(12);
-    this.doc.text(data.receiptNumber, this.pageWidth - this.margin - 40, this.currentY + 16, { align: 'center' });
-
-    this.updateCurrentY(35);
-
-    // Professional info section
+    // Receipt details in table format
     this.addSectionTitle('DADOS DO PRESTADOR DE SERVIÇOS');
     this.checkPageSpace(80);
     
     const prestadorInfo = [
       ['Nome/Razão Social:', data.recipient.name],
       ['NIF:', data.recipient.nif || 'N/A'],
-      ['Endereço:', data.recipient.address || 'N/A']
+      ['Endereço:', data.recipient.address || 'N/A'],
+      ['Valor Total:', `${data.amount.toFixed(2)} ${data.currency}`]
     ];
 
     try {
@@ -798,121 +839,134 @@ export class ReportGenerator {
         body: prestadorInfo,
         theme: 'grid',
         styles: {
-          fontSize: 11,
-          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 },
-          lineColor: [220, 220, 220],
-          lineWidth: 0.5
+          fontSize: 12,
+          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
         },
         columnStyles: {
           0: { 
             fontStyle: 'bold', 
-            fillColor: [248, 249, 250], 
-            cellWidth: 50,
-            textColor: [73, 80, 87]
+            fillColor: [244, 244, 244], 
+            cellWidth: 50
           },
           1: { 
-            cellWidth: 120,
-            textColor: [33, 37, 41]
+            cellWidth: 120
           }
         },
-        margin: { 
-          left: this.margin, 
-          right: this.margin,
-          top: this.margin,
-          bottom: this.footerHeight 
-        },
+        margin: { left: this.margin, right: this.margin },
         pageBreak: 'auto'
       });
 
       this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 60;
     } catch (error) {
-      console.error('Error creating service provider info table:', error);
+      console.error('Error creating service provider table:', error);
       this.updateCurrentY(60);
     }
 
-    // Amount highlight
-    this.checkPageSpace(40);
-    this.doc.setFillColor(40, 167, 69);
-    this.doc.roundedRect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 25, 5, 5, 'F');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(14);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text(
-      `VALOR TOTAL PAGO: ${data.amount.toFixed(2)} ${data.currency}`,
-      this.pageWidth / 2, this.currentY + 16, { align: 'center' }
-    );
-
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
-  generateResidentReceipt(data: ReceiptData): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'COMPROVATIVO DE PAGAMENTO - RESIDENTE');
+  async generateResidentReceipt(data: ReceiptData): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'COMPROVATIVO DE PAGAMENTO - RESIDENTE', documentId);
 
-    // Receipt number and status
-    this.checkPageSpace(60);
-    this.doc.setFillColor(40, 167, 69);
-    this.doc.roundedRect(this.pageWidth - this.margin - 90, this.currentY, 90, 25, 3, 3, 'F');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(9);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('COMPROVATIVO Nº', this.pageWidth - this.margin - 45, this.currentY + 8, { align: 'center' });
-    this.doc.setFontSize(11);
-    this.doc.text(data.receiptNumber, this.pageWidth - this.margin - 45, this.currentY + 18, { align: 'center' });
+    // Receipt details
+    this.addSectionTitle('DETALHES DO PAGAMENTO');
+    this.checkPageSpace(80);
+    
+    const residentInfo = [
+      ['Residente:', data.recipient.name],
+      ['Apartamento:', data.recipient.apartment || 'N/A'],
+      ['Descrição:', data.description],
+      ['Valor Pago:', `${data.amount.toFixed(2)} ${data.currency}`],
+      ['Data de Pagamento:', data.paymentDate || data.date]
+    ];
 
-    this.updateCurrentY(40);
+    try {
+      autoTable(this.doc, {
+        startY: this.currentY,
+        body: residentInfo,
+        theme: 'grid',
+        styles: {
+          fontSize: 12,
+          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
+        },
+        columnStyles: {
+          0: { 
+            fontStyle: 'bold', 
+            fillColor: [244, 244, 244], 
+            cellWidth: 50
+          },
+          1: { 
+            cellWidth: 120
+          }
+        },
+        margin: { left: this.margin, right: this.margin },
+        pageBreak: 'auto'
+      });
 
-    // Amount highlight with better design
-    this.checkPageSpace(40);
-    this.doc.setFillColor(13, 110, 253);
-    this.doc.roundedRect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 30, 5, 5, 'F');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFontSize(16);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text(
-      `VALOR PAGO: ${data.amount.toFixed(2)} ${data.currency}`,
-      this.pageWidth / 2, this.currentY + 20, { align: 'center' }
-    );
+      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
+    } catch (error) {
+      console.error('Error creating resident receipt table:', error);
+      this.updateCurrentY(80);
+    }
 
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
-  generateServiceAcceptanceReport(data: ReceiptData & { 
+  async generateServiceAcceptanceReport(data: ReceiptData & { 
     startDate?: string; 
     completionDate?: string; 
     observations?: string 
-  }): void {
-    this.addProfessionalHeader(data.condominiumInfo, 'TERMO DE ACEITAÇÃO DE SERVIÇO CONCLUÍDO');
+  }): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, 'TERMO DE ACEITAÇÃO DE SERVIÇO CONCLUÍDO', documentId);
 
-    // Document number and status
-    this.checkPageSpace(60);
-    this.doc.setFillColor(255, 193, 7);
-    this.doc.roundedRect(this.pageWidth - this.margin - 90, this.currentY, 90, 25, 3, 3, 'F');
-    this.doc.setTextColor(33, 37, 41);
-    this.doc.setFontSize(9);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('TERMO Nº', this.pageWidth - this.margin - 45, this.currentY + 8, { align: 'center' });
-    this.doc.setFontSize(11);
-    this.doc.text(data.receiptNumber, this.pageWidth - this.margin - 45, this.currentY + 18, { align: 'center' });
-
-    this.updateCurrentY(40);
-
-    // Professional acceptance confirmation
-    this.checkPageSpace(60);
-    this.doc.setFillColor(40, 167, 69);
-    this.doc.roundedRect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 50, 8, 8, 'F');
+    // Service acceptance details
+    this.addSectionTitle('DADOS DO SERVIÇO');
+    this.checkPageSpace(80);
     
-    this.doc.setFontSize(14);
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text(
-      'SERVIÇO ACEITO E APROVADO',
-      this.pageWidth / 2, this.currentY + 25, { align: 'center' }
-    );
+    const serviceInfo = [
+      ['Prestador:', data.recipient.name],
+      ['Descrição:', data.description],
+      ['Data de Início:', data.startDate || 'N/A'],
+      ['Data de Conclusão:', data.completionDate || 'N/A'],
+      ['Valor Total:', `${data.amount.toFixed(2)} ${data.currency}`],
+      ['Observações:', data.observations || 'Serviço aceito e aprovado']
+    ];
 
-    this.addProfessionalFooter(data.condominiumInfo);
+    try {
+      autoTable(this.doc, {
+        startY: this.currentY,
+        body: serviceInfo,
+        theme: 'grid',
+        styles: {
+          fontSize: 12,
+          cellPadding: { top: 6, bottom: 6, left: 10, right: 10 }
+        },
+        columnStyles: {
+          0: { 
+            fontStyle: 'bold', 
+            fillColor: [244, 244, 244], 
+            cellWidth: 50
+          },
+          1: { 
+            cellWidth: 120
+          }
+        },
+        margin: { left: this.margin, right: this.margin },
+        pageBreak: 'auto'
+      });
+
+      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 80;
+    } catch (error) {
+      console.error('Error creating service acceptance table:', error);
+      this.updateCurrentY(80);
+    }
+
+    await this.addTCasaFooter(documentId);
   }
 
-  generateContributionStatusReport(data: {
+  async generateContributionStatusReport(data: {
     title: string;
     year: number;
     condominiumInfo: {
@@ -938,10 +992,11 @@ export class ReportGenerator {
       }>;
     }>;
     months: string[];
-  }): void {
-    this.addProfessionalHeader(data.condominiumInfo, `${data.title} - ${data.year}`);
+  }): Promise<void> {
+    const documentId = this.generateDocumentId();
+    this.addTCasaHeader(data.condominiumInfo, `${data.title} - ${data.year}`, documentId);
 
-    // Summary cards
+    // Summary statistics
     this.checkPageSpace(80);
     const cardWidth = (this.pageWidth - this.margin * 2 - 30) / 4;
     const cardHeight = 30;
@@ -964,119 +1019,78 @@ export class ReportGenerator {
     cards.forEach((card, index) => {
       const x = startX + (cardWidth + 10) * index;
       
-      // Card background
       this.doc.setFillColor(card.color[0], card.color[1], card.color[2]);
       this.doc.roundedRect(x, this.currentY, cardWidth, cardHeight, 3, 3, 'F');
       
-      // Card content
       this.doc.setTextColor(255, 255, 255);
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text(card.value, x + cardWidth/2, this.currentY + 12, { align: 'center' });
-      
-      this.doc.setFontSize(8);
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.text(card.title, x + cardWidth/2, this.currentY + 22, { align: 'center' });
+      this.doc.text(card.title, x + cardWidth/2, this.currentY + 12, { align: 'center' });
+      this.doc.text(card.value, x + cardWidth/2, this.currentY + 22, { align: 'center' });
     });
 
     this.updateCurrentY(cardHeight + 30);
 
-    // Contribution table
-    this.addSectionTitle(`Situação por Apartamento - ${data.year}`);
-    this.checkPageSpace(100);
-
-    // Prepare table headers
-    const headers = ['Apt.', 'Andar', 'Morador', ...data.months, 'Dívida'];
-    
-    // Prepare table data
-    const tableData = data.contributionData.map(resident => {
-      console.log(`📊 PDF TABLE ROW - ${resident.apartment}:`, {
-        apartment: resident.apartment,
-        floor: resident.floor,
-        resident: resident.resident,
-        totalDebt: resident.totalDebt,
-        monthlyStatuses: resident.monthlyStatus.map(ms => `${ms.month}:${ms.status}`).join(', ')
-      });
-
-      const row = [
-        resident.apartment,
-        resident.floor,
-        resident.resident,
-        ...resident.monthlyStatus.map(status => status.status),
-        formatCurrency(resident.totalDebt)
-      ];
+    // Detailed contribution table
+    if (data.contributionData && data.contributionData.length > 0) {
+      this.addSectionTitle('Detalhamento por Apartamento');
+      this.checkPageSpace(100);
       
-      console.log(`📋 PDF TABLE ROW DATA - ${resident.apartment}:`, row);
+      const headers = ['Apt.', 'Residente', 'Total Pago', 'Em Dívida', ...data.months];
+      const tableData = [headers];
       
-      return row;
-    });
-
-    console.log('📑 PDF TABLE HEADERS:', headers);
-    console.log('📑 PDF TABLE DATA COUNT:', tableData.length);
-
-    try {
-      autoTable(this.doc, {
-        startY: this.currentY,
-        head: [headers],
-        body: tableData,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: [255, 255, 255],
-          fontSize: 8,
-          fontStyle: 'bold'
-        },
-        bodyStyles: {
-          fontSize: 7,
-          textColor: [50, 50, 50]
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
-        },
-        columnStyles: {
-          0: { cellWidth: 15 }, // Apt.
-          1: { cellWidth: 20 }, // Andar
-          2: { cellWidth: 30 }, // Morador
-          // Monthly columns (3-14) will auto-size
-          15: { cellWidth: 25 } // Dívida
-        },
-        margin: { 
-          left: this.margin, 
-          right: this.margin,
-          top: this.margin,
-          bottom: this.footerHeight 
-        },
-        pageBreak: 'auto',
-        didDrawCell: (data) => {
-          // Color code the monthly status cells
-          if (data.column.index >= 3 && data.column.index <= 14) {
-            const cellValue = data.cell.text[0];
-            if (cellValue === 'P') {
-              data.cell.styles.fillColor = [212, 237, 218]; // Light green
-              data.cell.styles.textColor = [21, 87, 36];
-            } else if (cellValue === 'D') {
-              data.cell.styles.fillColor = [248, 215, 218]; // Light red
-              data.cell.styles.textColor = [114, 28, 36];
+      data.contributionData.forEach((item) => {
+        const row = [
+          item.apartment,
+          item.resident,
+          formatCurrency(item.totalPaid),
+          formatCurrency(item.totalDebt),
+          ...item.monthlyStatus.map(m => {
+            switch(m.status) {
+              case 'paid': return 'P';
+              case 'pending': return 'Pe';
+              case 'overdue': return 'A';
+              default: return '-';
             }
-          }
-        }
+          })
+        ];
+        tableData.push(row);
       });
 
-      this.currentY = (this.doc as any).lastAutoTable?.finalY + 20 || this.currentY + 100;
-    } catch (error) {
-      console.error('Error creating contribution table:', error);
-      this.updateCurrentY(100);
+      try {
+        autoTable(this.doc, {
+          startY: this.currentY,
+          head: [tableData[0]],
+          body: tableData.slice(1),
+          theme: 'grid',
+          headStyles: {
+            fillColor: [244, 244, 244],
+            textColor: [0, 0, 0],
+            fontSize: 8,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 8,
+            textColor: [0, 0, 0]
+          },
+          columnStyles: {
+            0: { cellWidth: 15 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 25 }
+          },
+          margin: { left: this.margin, right: this.margin },
+          pageBreak: 'auto'
+        });
+
+        this.currentY = (this.doc as any).lastAutoTable?.finalY + 15 || this.currentY + 100;
+      } catch (error) {
+        console.error('Error creating contribution table:', error);
+        this.updateCurrentY(100);
+      }
     }
 
-    // Legend
-    this.checkPageSpace(40);
-    this.addSectionTitle('Legenda');
-    this.doc.setFontSize(9);
-    this.doc.setTextColor(50, 50, 50);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.text('P = Pago  |  D = Dívida  |  - = Sem dados', this.margin, this.currentY);
-
-    this.addProfessionalFooter(data.condominiumInfo);
+    await this.addTCasaFooter(documentId);
   }
 
   save(filename: string): void {
