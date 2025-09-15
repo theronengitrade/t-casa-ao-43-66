@@ -1,8 +1,16 @@
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
+
+// Extend jsPDF type to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 export interface ReportData {
   residents?: number;
@@ -204,7 +212,7 @@ export class ReportGenerator {
     condominiumInfo: any,
     documentId: string,
     content: string
-  ): Promise<string> {
+  ): Promise<{ html: string; footer: { docId: string; hash: string; verificationUrl: string; version: string; qr: string; issuedAt: string } }> {
     const currentDateTime = new Date().toISOString();
     const systemVersion = '2.5.1';
     
@@ -218,7 +226,7 @@ export class ReportGenerator {
     // Generate QR Code
     const qrCodeBase64 = await this.generateQRCode(verificationUrl);
 
-    return `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -259,11 +267,21 @@ export class ReportGenerator {
     </footer>
 </body>
 </html>`;
+
+    return {
+      html,
+      footer: {
+        docId: documentId,
+        hash: documentHash,
+        verificationUrl,
+        version: systemVersion,
+        qr: qrCodeBase64,
+        issuedAt: currentDateTime,
+      }
+    };
   }
 
-  private htmlToJsPDF(html: string): void {
-    // Since jsPDF doesn't support direct HTML rendering well,
-    // we'll create a temporary element and extract text content
+  private htmlToJsPDF(html: string, footer: { docId: string; hash: string; verificationUrl: string; version: string; qr: string; issuedAt: string }): void {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
@@ -272,14 +290,15 @@ export class ReportGenerator {
     
     let yPosition = 20;
     const pageWidth = this.doc.internal.pageSize.width;
+    const pageHeight = this.doc.internal.pageSize.height;
     const margin = 20;
     
-    // Extract and render content sections
+    // Header
     const headerH1 = doc.querySelector('header h1')?.textContent || '';
     const headerP = doc.querySelector('header p')?.textContent || '';
+    const headerH2 = doc.querySelector('header h2')?.textContent || '';
     const metaDiv = doc.querySelector('.meta')?.textContent || '';
     
-    // Header
     this.doc.setFontSize(20);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(headerH1, pageWidth / 2, yPosition, { align: 'center' });
@@ -288,21 +307,28 @@ export class ReportGenerator {
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'normal');
     this.doc.text(headerP, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 20;
+    yPosition += 12;
+
+    if (headerH2) {
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(220, 53, 69);
+      this.doc.text(headerH2, pageWidth / 2, yPosition, { align: 'center' });
+      this.doc.setTextColor(0, 0, 0);
+      yPosition += 12;
+    }
     
-    // Meta
     this.doc.setFontSize(11);
     this.doc.setTextColor(108, 117, 125);
     this.doc.text(metaDiv, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 30;
+    this.doc.setTextColor(0,0,0);
+    yPosition += 20;
     
-    // Content sections
-    this.doc.setTextColor(0, 0, 0);
-    this.doc.setFontSize(12);
-    
+    // Sections: in document order
     const sections = doc.querySelectorAll('.section-title, .stats, table');
     sections.forEach((section) => {
-      if (yPosition > 250) {
+      // Leave space for footer
+      if (yPosition > pageHeight - 80) {
         this.doc.addPage();
         yPosition = 20;
       }
@@ -312,26 +338,67 @@ export class ReportGenerator {
         this.doc.setFont('helvetica', 'bold');
         this.doc.setTextColor(41, 128, 185);
         this.doc.text(section.textContent || '', margin, yPosition);
-        yPosition += 15;
+        this.doc.setTextColor(0,0,0);
+        yPosition += 10;
       } else if (section.classList.contains('stats')) {
         this.doc.setFontSize(12);
         this.doc.setFont('helvetica', 'normal');
-        this.doc.setTextColor(0, 0, 0);
-        const stats = section.textContent?.split('\n').filter(line => line.trim()) || [];
+        const stats = Array.from(section.querySelectorAll('p')).map(p => p.textContent?.trim() || '').filter(Boolean);
         stats.forEach((stat) => {
-          this.doc.text(stat.trim(), margin, yPosition);
-          yPosition += 8;
+          if (yPosition > pageHeight - 80) {
+            this.doc.addPage();
+            yPosition = 20;
+          }
+          this.doc.text(stat, margin, yPosition);
+          yPosition += 7;
         });
-        yPosition += 10;
+        yPosition += 6;
+      } else if (section.tagName.toLowerCase() === 'table') {
+        // Build head and body for autoTable
+        const headRow = Array.from(section.querySelectorAll('thead th')).map(th => th.textContent || '');
+        const bodyRows = Array.from(section.querySelectorAll('tbody tr')).map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent || ''));
+        
+        autoTable(this.doc, {
+          startY: yPosition,
+          head: headRow.length ? [headRow] : undefined,
+          body: bodyRows,
+          theme: 'grid',
+          headStyles: { fillColor: [244,244,244], textColor: [0,0,0], fontSize: 11, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 11, textColor: [0,0,0] },
+          margin: { left: margin, right: margin, top: 20, bottom: 80 },
+          pageBreak: 'auto'
+        });
+        // Update yPosition
+        // @ts-ignore
+        yPosition = (this.doc as any).lastAutoTable?.finalY ? (this.doc as any).lastAutoTable.finalY + 10 : yPosition + 60;
       }
     });
     
-    // Footer on last page
-    yPosition = this.doc.internal.pageSize.height - 80;
-    const footerText = doc.querySelector('footer')?.textContent?.replace(/QR Code de Verificação/g, '') || '';
-    this.doc.setFontSize(10);
+    // Footer on last page with QR image
+    const footerBoxTop = pageHeight - 60;
+    this.doc.setFillColor(248, 249, 250);
+    this.doc.rect(0, footerBoxTop, pageWidth, 60, 'F');
+    this.doc.setDrawColor(220, 220, 220);
+    this.doc.setLineWidth(0.5);
+    this.doc.line(0, footerBoxTop, pageWidth, footerBoxTop);
+
+    this.doc.setFontSize(8);
     this.doc.setTextColor(108, 117, 125);
-    this.doc.text(footerText, pageWidth / 2, yPosition, { align: 'center' });
+    const line1 = `Documento gerado automaticamente por T-Casa ${footer.version} · Documento ID: ${footer.docId}`;
+    const line2 = `Hash SHA256: ${footer.hash}`;
+    const line3 = `Verifique autenticidade em: ${footer.verificationUrl}`;
+    this.doc.text(line1, pageWidth / 2, footerBoxTop + 10, { align: 'center' });
+    this.doc.text(line2, pageWidth / 2, footerBoxTop + 18, { align: 'center' });
+    this.doc.text(line3, pageWidth / 2, footerBoxTop + 26, { align: 'center' });
+
+    try {
+      const qrSize = 22;
+      const qrX = (pageWidth - qrSize) / 2;
+      const qrY = footerBoxTop + 30;
+      this.doc.addImage(footer.qr, 'PNG', qrX, qrY, qrSize, qrSize);
+    } catch (e) {
+      console.error('Erro ao adicionar QR no rodapé:', e);
+    }
   }
 
   async generateResidentsReport(data: ReportData): Promise<void> {
@@ -411,14 +478,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'Relatório de Moradores',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateFinancialReport(data: ReportData): Promise<void> {
@@ -458,14 +525,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'Relatório Financeiro',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateVisitorsReport(data: ReportData): Promise<void> {
@@ -519,14 +586,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'Relatório de Visitantes',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateAnnouncementsReport(data: ReportData): Promise<void> {
@@ -581,14 +648,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'Relatório de Anúncios',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateReservationsReport(data: ReportData): Promise<void> {
@@ -643,14 +710,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'Relatório de Reservas',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateComprehensiveReport(data: ReportData): Promise<void> {
@@ -691,14 +758,14 @@ export class ReportGenerator {
       ${paymentsContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'RELATÓRIO COMPLETO',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateServiceProviderReceipt(data: ReceiptData): Promise<void> {
@@ -716,14 +783,14 @@ export class ReportGenerator {
       </table>
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'RECIBO DE PAGAMENTO - PRESTADOR DE SERVIÇOS',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateResidentReceipt(data: ReceiptData): Promise<void> {
@@ -742,14 +809,14 @@ export class ReportGenerator {
       </table>
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'COMPROVATIVO DE PAGAMENTO - RESIDENTE',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateServiceAcceptanceReport(data: ReceiptData & { 
@@ -773,14 +840,14 @@ export class ReportGenerator {
       </table>
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       'TERMO DE ACEITAÇÃO DE SERVIÇO CONCLUÍDO',
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   async generateContributionStatusReport(data: {
@@ -866,14 +933,14 @@ export class ReportGenerator {
       ${tableContent}
     `;
 
-    const html = await this.generateTCasaHTMLTemplate(
+    const { html, footer } = await this.generateTCasaHTMLTemplate(
       `${data.title} - ${data.year}`,
       data.condominiumInfo,
       documentId,
       content
     );
 
-    this.htmlToJsPDF(html);
+    this.htmlToJsPDF(html, footer);
   }
 
   save(filename: string) {
