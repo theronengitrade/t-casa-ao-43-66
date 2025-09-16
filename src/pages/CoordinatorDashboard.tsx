@@ -301,19 +301,19 @@ const CoordinatorDashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex w-full bg-background mobile-safe-area">
         <CoordinatorSidebar 
           activeSection={activeSection} 
           setActiveSection={setActiveSection}
         />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="sticky top-[env(safe-area-inset-top)] z-40 h-16 bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur border-b shadow-sm flex items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
-              <SidebarTrigger />
+          <header className="sticky top-[env(safe-area-inset-top)] z-40 h-14 sm:h-16 bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur border-b shadow-sm flex items-center justify-between px-3 sm:px-6">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+              <SidebarTrigger className="touch-target" />
               <img src="/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png" alt="T-Casa" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+              <h1 className="text-sm sm:text-xl font-semibold truncate">
                 <span className="hidden sm:inline">Coordenador - </span>
                 <span className="sm:hidden">Coord. - </span>
                 {condominium?.name || 'Carregando...'}
@@ -322,12 +322,12 @@ const CoordinatorDashboard = () => {
             
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="hidden md:flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm">
                   {profile.first_name} {profile.last_name}
                 </span>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="touch-target">
                 <LogOut className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Sair</span>
               </Button>
@@ -335,8 +335,10 @@ const CoordinatorDashboard = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-4 sm:p-6">
-            {renderContent()}
+          <main className="flex-1 p-3 sm:p-6 overflow-y-auto mobile-scroll">
+            <div className="max-w-full">
+              {renderContent()}
+            </div>
           </main>
         </div>
       </div>
