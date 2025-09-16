@@ -289,22 +289,25 @@ const CityViewerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm">
-        <div className="h-16 flex items-center justify-between px-6">
-          <div className="flex items-center space-x-4">
-            <img src={tcasaLogo} alt="T-Casa" className="h-10 w-auto" />
-            <div>
-              <h1 className="font-semibold">Visualizador de Cidades & Condomínios</h1>
-              <p className="text-sm text-muted-foreground">
+      <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm mobile-safe-area">
+        <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+            <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm sm:text-base font-semibold truncate">Visualizador de Cidades & Condomínios</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Bem-vindo, {profile.first_name} {profile.last_name}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <Badge variant="default" className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            <Badge variant="default" className="hidden sm:flex items-center space-x-1">
               <Eye className="h-4 w-4" />
               <span>City Viewer</span>
+            </Badge>
+            <Badge variant="default" className="sm:hidden">
+              <Eye className="h-3 w-3" />
             </Badge>
             <Button 
               variant="ghost" 
@@ -313,6 +316,7 @@ const CityViewerDashboard = () => {
                 title: "Configurações",
                 description: "Funcionalidade de configurações em desenvolvimento."
               })}
+              className="hidden sm:flex"
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -324,8 +328,8 @@ const CityViewerDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="p-6">
-        <div className="space-y-6">
+      <main className="p-4 sm:p-6 mobile-scroll">
+        <div className="space-y-4 sm:space-y-6">
           {/* Breadcrumb */}
           <div className="flex items-center space-x-2 text-sm">
             <Button 

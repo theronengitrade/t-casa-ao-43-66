@@ -262,28 +262,36 @@ const SuperAdminDashboard = () => {
         
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm">
-            <div className="h-16 flex items-center justify-between px-6">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger className="md:hidden" />
-                <img src={tcasaLogo} alt="T-Casa" className="h-10 w-auto" />
-                <div>
-                  <h1 className="font-semibold">Super Administração</h1>
-                  <p className="text-sm text-muted-foreground">
+          <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm mobile-safe-area">
+            <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+                <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0" />
+                <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-sm sm:text-base font-semibold truncate">Super Administração</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     Bem-vindo, {profile.first_name} {profile.last_name}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4">
-                <Badge variant="default" className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                <Badge variant="default" className="hidden sm:flex items-center space-x-1">
                   <Shield className="h-4 w-4" />
                   <span>Super Admin</span>
                 </Badge>
+                <Badge variant="default" className="sm:hidden">
+                  <Shield className="h-3 w-3" />
+                </Badge>
                 {activeSection === "condominiums" && (
-                  <Button onClick={() => setShowCreateWizard(true)} className="flex items-center space-x-2">
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="hidden sm:flex items-center space-x-2">
                     <Plus className="h-4 w-4" />
                     <span>Criar Condomínio</span>
+                  </Button>
+                )}
+                {activeSection === "condominiums" && (
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="sm:hidden">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 )}
                 <Button 
@@ -293,6 +301,7 @@ const SuperAdminDashboard = () => {
                     title: "Configurações",
                     description: "Funcionalidade de configurações em desenvolvimento."
                   })}
+                  className="hidden sm:flex"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -304,22 +313,22 @@ const SuperAdminDashboard = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto">
-            <div className="p-6">
+          <main className="flex-1 overflow-y-auto mobile-scroll">
+            <div className="p-4 sm:p-6">
               {/* Dashboard Overview - Only show on condominiums section */}
               {activeSection === "condominiums" && (
-                <div className="space-y-8 mb-8">
-                  <div className="space-y-4">
-                    <h2 className="text-3xl font-bold text-foreground">
+                <div className="space-y-6 sm:space-y-8 mb-6 sm:mb-8">
+                  <div className="space-y-2 sm:space-y-4">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
                       Painel de Super Administração
                     </h2>
-                    <p className="text-lg text-muted-foreground">
+                    <p className="text-base sm:text-lg text-muted-foreground">
                       Gestão global de condomínios, licenças e coordenadores
                     </p>
                   </div>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Stats Grid - Mobile responsive */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
