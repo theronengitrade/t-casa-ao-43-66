@@ -29,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CoordinatorSidebarProps {
   activeSection: string;
@@ -59,8 +60,17 @@ const menuItems = [
 ];
 
 export function CoordinatorSidebar({ activeSection, setActiveSection }: CoordinatorSidebarProps) {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
+  const isMobile = useIsMobile();
+
+  const handleMenuItemClick = (sectionId: string) => {
+    setActiveSection(sectionId);
+    // Auto-hide sidebar on mobile after menu item click
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} mobile-tap sidebar-3d`}>
@@ -75,7 +85,7 @@ export function CoordinatorSidebar({ activeSection, setActiveSection }: Coordina
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     isActive={activeSection === item.id}
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={() => handleMenuItemClick(item.id)}
                     className={`
                       sidebar-menu-item touch-target
                       ${collapsed ? 'justify-center px-3' : 'justify-start'}

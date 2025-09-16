@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useCoordinationPermissions } from "@/hooks/useCoordinationPermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ResidentSidebarProps {
   activeTab: string;
@@ -82,10 +83,19 @@ const coordinationMenuItems = [
 ];
 
 const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: ResidentSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const { isCoordinationMember } = useAuth();
   const { hasPermission, loading: permissionsLoading } = useCoordinationPermissions();
   const collapsed = state === "collapsed";
+  const isMobile = useIsMobile();
+
+  const handleTabChange = (tabId: string) => {
+    onTabChange(tabId);
+    // Auto-hide sidebar on mobile after menu item click
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Construir menu dinâmico baseado em permissões
   const getMenuItems = () => {
@@ -164,7 +174,7 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={activeTab === item.id}
-                      onClick={() => onTabChange(item.id)}
+                      onClick={() => handleTabChange(item.id)}
                       className={`
                         sidebar-menu-item touch-target w-full
                         ${collapsed ? 'justify-center px-3' : 'justify-start'}
@@ -200,7 +210,7 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
                         <SidebarMenuItem key={item.id}>
                           <SidebarMenuButton
                             isActive={activeTab === item.id}
-                            onClick={() => onTabChange(item.id)}
+                            onClick={() => handleTabChange(item.id)}
                             className={`
                               sidebar-menu-item touch-target w-full bg-primary/5 border-l-2 border-primary/20
                               ${collapsed ? 'justify-center px-3' : 'justify-start'}
