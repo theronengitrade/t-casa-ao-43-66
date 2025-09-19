@@ -309,7 +309,7 @@ const CoordinatorDashboard = () => {
         
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="sticky top-[env(safe-area-inset-top)] z-40 h-14 sm:h-16 bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur border-b shadow-sm flex items-center justify-between px-3 sm:px-6">
+          <header className="mobile-fixed-header h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6">
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
               <SidebarTrigger className="touch-target" />
               <img src="/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png" alt="T-Casa" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
@@ -335,8 +335,8 @@ const CoordinatorDashboard = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 p-3 sm:p-6 overflow-y-auto mobile-scroll">
-            <div className="max-w-full">
+          <main className="flex-1 p-3 sm:p-6 overflow-y-auto mobile-scroll mobile-main-content">
+            <div className="max-w-full mobile-viewport">
               {renderContent()}
             </div>
           </main>

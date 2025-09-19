@@ -140,7 +140,7 @@ const ResidentDashboard = () => {
         {/* Main Content using SidebarInset for proper spacing */}
         <SidebarInset className="flex-1 flex flex-col h-screen overflow-y-auto mobile-scroll">
           {/* Header */}
-          <header className="sticky top-[env(safe-area-inset-top)] z-40 bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur border-b shadow-sm px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+          <header className="mobile-fixed-header px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0" />
@@ -197,7 +197,7 @@ const ResidentDashboard = () => {
           </header>
 
           {/* Content */}
-          <div className="flex-1 p-4 sm:p-6">
+          <div className="flex-1 p-4 sm:p-6 mobile-main-content mobile-viewport">
             {/* Card de Status de Coordenação (se aplicável) */}
             {isCoordinationMember && activeTab === "overview" && (
               <div className="mb-6">

@@ -289,7 +289,7 @@ const CityViewerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm mobile-safe-area">
+      <header className="mobile-fixed-header">
         <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
@@ -328,8 +328,8 @@ const CityViewerDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="p-4 sm:p-6 mobile-scroll">
-        <div className="space-y-4 sm:space-y-6">
+      <main className="p-4 sm:p-6 mobile-scroll mobile-main-content">
+        <div className="space-y-4 sm:space-y-6 mobile-viewport">
           {/* Breadcrumb */}
           <div className="flex items-center space-x-2 text-sm">
             <Button 

@@ -262,7 +262,7 @@ const SuperAdminDashboard = () => {
         
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-40 border-b bg-card/80 supports-[backdrop-filter]:bg-card/60 backdrop-blur shadow-sm mobile-safe-area">
+          <header className="mobile-fixed-header">
             <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0" />
@@ -313,8 +313,8 @@ const SuperAdminDashboard = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto mobile-scroll">
-            <div className="p-4 sm:p-6">
+          <main className="flex-1 overflow-y-auto mobile-scroll mobile-main-content">
+            <div className="p-4 sm:p-6 mobile-viewport">
               {/* Dashboard Overview - Only show on condominiums section */}
               {activeSection === "condominiums" && (
                 <div className="space-y-6 sm:space-y-8 mb-6 sm:mb-8">

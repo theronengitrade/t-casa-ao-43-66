@@ -167,6 +167,22 @@ All colors MUST be HSL and based on T-Casa branding.
     overscroll-behavior: contain;
   }
 
+  /* Fixed header for mobile devices */
+  .mobile-fixed-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-safe-top {
+    padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+  }
+
   .mobile-tap {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -249,6 +265,20 @@ All colors MUST be HSL and based on T-Casa branding.
       padding: 16px;
       max-height: calc(100vh - 80px);
       overflow-y: auto;
+    }
+    
+    /* Prevent content cutoff on mobile */
+    .mobile-main-content {
+      padding-top: calc(env(safe-area-inset-top) + 64px); /* Account for fixed header */
+      padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+      min-height: calc(100vh - env(safe-area-inset-top) - 64px);
+    }
+    
+    /* Responsive viewport handling */
+    .mobile-viewport {
+      width: 100vw;
+      max-width: 100%;
+      overflow-x: hidden;
     }
   }
 
