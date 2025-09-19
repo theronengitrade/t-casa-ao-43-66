@@ -167,20 +167,50 @@ All colors MUST be HSL and based on T-Casa branding.
     overscroll-behavior: contain;
   }
 
-  /* Fixed header for mobile devices */
+  /* Fixed header for mobile devices - CRITICAL POSITIONING */
   .mobile-fixed-header {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    background: hsl(var(--card) / 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid hsl(var(--border));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Body offset for fixed header */
+  .mobile-body-offset {
+    padding-top: 4rem; /* 64px for header height */
+  }
+
+  @media (min-width: 640px) {
+    .mobile-body-offset {
+      padding-top: 4.5rem; /* 72px for larger header on sm+ */
+    }
   }
 
   .mobile-safe-top {
     padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+  }
+
+  /* Responsive content constraints */
+  .mobile-responsive-content {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    hyphens: auto !important;
+  }
+
+  /* Image responsiveness */
+  .mobile-responsive-content img,
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
   }
 
   .mobile-tap {
@@ -195,34 +225,39 @@ All colors MUST be HSL and based on T-Casa branding.
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Better mobile touch targets */
+  /* Touch-friendly targets - MINIMUM 44px as per requirements */
   .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 2.75rem !important; /* 44px */
+    min-width: 2.75rem !important;  /* 44px */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Enhanced mobile form elements */
   .mobile-form-element {
-    font-size: 16px; /* Prevents zoom on iOS */
-    padding: 12px 16px;
+    font-size: 1rem !important; /* 16px - Prevents zoom on iOS */
+    min-height: 2.75rem !important; /* 44px minimum */
+    padding: 0.75rem 1rem !important; /* 12px 16px */
   }
 
   /* Responsive table wrapper for mobile */
   .mobile-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     border: 1px solid hsl(var(--border));
+    max-width: 100%;
   }
 
   /* Mobile-optimized cards */
   .mobile-card {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
     border: 1px solid hsl(var(--border));
     background: hsl(var(--card));
     overflow: hidden;
+    max-width: 100%;
   }
 
   .mobile-card:hover {
@@ -234,11 +269,12 @@ All colors MUST be HSL and based on T-Casa branding.
     transform: scale(0.98);
   }
 
-  /* Mobile grid system */
+  /* Mobile grid system with responsive flex-wrap */
   .mobile-grid {
     display: grid;
     gap: 1rem;
     grid-template-columns: 1fr;
+    max-width: 100%;
   }
 
   @media (min-width: 640px) {
@@ -256,29 +292,39 @@ All colors MUST be HSL and based on T-Casa branding.
   /* Mobile modal improvements */
   @media (max-width: 768px) {
     .mobile-modal {
-      margin: 8px;
-      max-height: calc(100vh - 16px);
-      width: calc(100vw - 16px);
+      margin: 0.5rem;
+      max-height: calc(100vh - 1rem);
+      width: calc(100vw - 1rem);
+      max-width: 100%;
     }
     
     .mobile-modal-content {
-      padding: 16px;
-      max-height: calc(100vh - 80px);
+      padding: 1rem;
+      max-height: calc(100vh - 5rem);
       overflow-y: auto;
+      max-width: 100%;
     }
     
-    /* Prevent content cutoff on mobile */
+    /* Prevent content cutoff on mobile with fixed header */
     .mobile-main-content {
-      padding-top: calc(env(safe-area-inset-top) + 64px); /* Account for fixed header */
+      padding-top: 1rem;
       padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
-      min-height: calc(100vh - env(safe-area-inset-top) - 64px);
+      min-height: calc(100vh - 4rem); /* Account for fixed header */
+      max-width: 100% !important;
+      overflow-x: hidden !important;
     }
     
     /* Responsive viewport handling */
     .mobile-viewport {
-      width: 100vw;
-      max-width: 100%;
-      overflow-x: hidden;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-wrap: break-word !important;
+    }
+    
+    /* Flex layouts should wrap on mobile */
+    .mobile-flex-wrap {
+      flex-wrap: wrap !important;
     }
   }
 
@@ -286,11 +332,13 @@ All colors MUST be HSL and based on T-Casa branding.
   @media (max-width: 640px) {
     .mobile-button-stack {
       flex-direction: column;
-      gap: 8px;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
     
     .mobile-button-stack > * {
       width: 100%;
+      min-height: 2.75rem; /* 44px touch target */
     }
   }
 
@@ -298,22 +346,27 @@ All colors MUST be HSL and based on T-Casa branding.
   @media (max-width: 768px) {
     .mobile-form {
       padding: 1rem;
+      max-width: 100%;
     }
     
     .mobile-form .form-row {
       flex-direction: column;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
     
     .mobile-form .form-group {
       margin-bottom: 1rem;
+      max-width: 100%;
     }
     
     .mobile-form input, 
     .mobile-form select, 
     .mobile-form textarea {
-      font-size: 16px; /* Prevents zoom on iOS */
-      width: 100%;
+      font-size: 1rem !important; /* 16px - Prevents zoom on iOS */
+      width: 100% !important;
+      min-height: 2.75rem !important; /* 44px touch target */
+      max-width: 100% !important;
     }
   }
 
@@ -385,20 +438,22 @@ All colors MUST be HSL and based on T-Casa branding.
     }
   }
 
-  /* Additional mobile optimizations */
+  /* Additional mobile optimizations - Ultra-responsive */
   @media (max-width: 640px) {
     /* Ensure no horizontal overflow */
     html, body {
-      overflow-x: hidden;
-      width: 100%;
+      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100% !important;
     }
     
     /* Mobile-specific container */
     .mobile-container {
-      width: 100%;
-      max-width: 100vw;
+      width: 100% !important;
+      max-width: 100vw !important;
       padding: 0 1rem;
-      box-sizing: border-box;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
     }
     
     /* Responsive text scaling */
@@ -406,18 +461,19 @@ All colors MUST be HSL and based on T-Casa branding.
       font-size: clamp(0.875rem, 2.5vw, 1rem);
     }
     
-    /* Mobile-friendly spacing */
+    /* Mobile-friendly spacing with responsive units */
     .space-mobile {
       margin: 0.5rem 0;
     }
     
     /* Touch-friendly interactions */
     .touch-friendly {
-      padding: 12px 16px;
-      border-radius: 8px;
-      min-height: 48px;
+      padding: 0.75rem 1rem !important; /* 12px 16px */
+      border-radius: 0.5rem;
+      min-height: 2.75rem !important; /* 44px */
       display: flex;
       align-items: center;
+      touch-action: manipulation;
     }
     
     /* Mobile card improvements */
@@ -426,25 +482,44 @@ All colors MUST be HSL and based on T-Casa branding.
       flex-direction: column;
       gap: 0.75rem;
       padding: 1rem;
+      max-width: 100%;
     }
     
     /* Mobile table alternative */
     .mobile-table-alt {
       display: block;
+      max-width: 100%;
+      overflow-x: auto;
     }
     
     .mobile-table-alt table {
-      display: none;
+      min-width: 100%;
     }
     
     /* Better mobile search */
     .mobile-search {
       position: sticky;
-      top: 0;
+      top: 4rem; /* Below fixed header */
       z-index: 10;
       background: hsl(var(--background));
       padding: 1rem;
       border-bottom: 1px solid hsl(var(--border));
+      max-width: 100%;
+    }
+    
+    /* Ultra-small screen optimizations */
+    @media (max-width: 400px) {
+      .mobile-container {
+        padding: 0 0.5rem !important;
+      }
+      
+      .mobile-main-content {
+        padding: 0.5rem !important;
+      }
+      
+      .touch-friendly {
+        padding: 0.625rem 0.75rem !important; /* 10px 12px for very small screens */
+      }
     }
   }
 }

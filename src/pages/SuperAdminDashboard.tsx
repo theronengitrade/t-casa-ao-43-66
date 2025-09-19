@@ -254,18 +254,18 @@ const SuperAdminDashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full flex bg-background">
+      <div className="min-h-screen w-full flex bg-background mobile-body-offset">
         <SuperAdminSidebar 
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col mobile-responsive-content">
           {/* Header */}
           <header className="mobile-fixed-header">
             <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
-              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-                <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0" />
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
+                <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
                 <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-sm sm:text-base font-semibold truncate">Super Administração</h1>
@@ -275,7 +275,7 @@ const SuperAdminDashboard = () => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 mobile-flex-wrap">
                 <Badge variant="default" className="hidden sm:flex items-center space-x-1">
                   <Shield className="h-4 w-4" />
                   <span>Super Admin</span>
@@ -284,13 +284,13 @@ const SuperAdminDashboard = () => {
                   <Shield className="h-3 w-3" />
                 </Badge>
                 {activeSection === "condominiums" && (
-                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="hidden sm:flex items-center space-x-2">
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="hidden sm:flex items-center space-x-2 touch-target">
                     <Plus className="h-4 w-4" />
                     <span>Criar Condomínio</span>
                   </Button>
                 )}
                 {activeSection === "condominiums" && (
-                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="sm:hidden">
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="sm:hidden touch-target">
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
@@ -301,11 +301,11 @@ const SuperAdminDashboard = () => {
                     title: "Configurações",
                     description: "Funcionalidade de configurações em desenvolvimento."
                   })}
-                  className="hidden sm:flex"
+                  className="hidden sm:flex touch-target"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={signOut}>
+                <Button variant="ghost" size="sm" onClick={signOut} className="touch-target">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
@@ -314,7 +314,7 @@ const SuperAdminDashboard = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto mobile-scroll mobile-main-content">
-            <div className="p-4 sm:p-6 mobile-viewport">
+            <div className="p-4 sm:p-6 mobile-viewport mobile-responsive-content">
               {/* Dashboard Overview - Only show on condominiums section */}
               {activeSection === "condominiums" && (
                 <div className="space-y-6 sm:space-y-8 mb-6 sm:mb-8">

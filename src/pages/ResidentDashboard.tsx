@@ -128,7 +128,7 @@ const ResidentDashboard = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-background mobile-safe-area w-full flex">
+      <div className="min-h-screen bg-background mobile-safe-area w-full flex mobile-body-offset">
         {/* Sidebar */}
         <ResidentSidebar 
           activeTab={activeTab} 
@@ -138,12 +138,12 @@ const ResidentDashboard = () => {
         />
 
         {/* Main Content using SidebarInset for proper spacing */}
-        <SidebarInset className="flex-1 flex flex-col h-screen overflow-y-auto mobile-scroll">
+        <SidebarInset className="flex-1 flex flex-col h-screen overflow-y-auto mobile-scroll mobile-responsive-content">
           {/* Header */}
           <header className="mobile-fixed-header px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-                <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0" />
+            <div className="flex items-center justify-between mobile-flex-wrap">
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
+                <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
                 <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-8 w-auto flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg sm:text-xl font-semibold truncate">Portal do Residente</h1>
@@ -155,12 +155,12 @@ const ResidentDashboard = () => {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 mobile-flex-wrap">
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-medium">
                       {profile.first_name} {profile.last_name}
                     </p>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 mobile-flex-wrap">
                       <Badge variant="secondary" className="text-xs">
                         <User className="h-3 w-3 mr-1" />
                         Residente
@@ -177,7 +177,7 @@ const ResidentDashboard = () => {
                     <p className="text-xs font-medium truncate max-w-20">
                       {profile.first_name}
                     </p>
-                    <div className="flex gap-1 justify-center">
+                    <div className="flex gap-1 justify-center mobile-flex-wrap">
                       <Badge variant="secondary" className="text-xs">
                         Residente
                       </Badge>
@@ -188,7 +188,7 @@ const ResidentDashboard = () => {
                       )}
                     </div>
                   </div>
-                <Button variant="outline" size="sm" onClick={signOut} className="flex-shrink-0">
+                <Button variant="outline" size="sm" onClick={signOut} className="flex-shrink-0 touch-target">
                   <LogOut className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>
@@ -197,7 +197,7 @@ const ResidentDashboard = () => {
           </header>
 
           {/* Content */}
-          <div className="flex-1 p-4 sm:p-6 mobile-main-content mobile-viewport">
+          <div className="flex-1 p-4 sm:p-6 mobile-main-content mobile-viewport mobile-responsive-content">
             {/* Card de Status de Coordenação (se aplicável) */}
             {isCoordinationMember && activeTab === "overview" && (
               <div className="mb-6">

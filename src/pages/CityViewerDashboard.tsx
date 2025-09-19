@@ -287,11 +287,11 @@ const CityViewerDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background mobile-body-offset">
       {/* Header */}
       <header className="mobile-fixed-header">
         <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
             <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
             <div className="min-w-0 flex-1">
               <h1 className="text-sm sm:text-base font-semibold truncate">Visualizador de Cidades & Condomínios</h1>
@@ -301,7 +301,7 @@ const CityViewerDashboard = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 mobile-flex-wrap">
             <Badge variant="default" className="hidden sm:flex items-center space-x-1">
               <Eye className="h-4 w-4" />
               <span>City Viewer</span>
@@ -316,11 +316,11 @@ const CityViewerDashboard = () => {
                 title: "Configurações",
                 description: "Funcionalidade de configurações em desenvolvimento."
               })}
-              className="hidden sm:flex"
+              className="hidden sm:flex touch-target"
             >
               <Settings className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={signOut}>
+            <Button variant="ghost" size="sm" onClick={signOut} className="touch-target">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -329,7 +329,7 @@ const CityViewerDashboard = () => {
 
       {/* Main Content */}
       <main className="p-4 sm:p-6 mobile-scroll mobile-main-content">
-        <div className="space-y-4 sm:space-y-6 mobile-viewport">
+        <div className="space-y-4 sm:space-y-6 mobile-viewport mobile-responsive-content">
           {/* Breadcrumb */}
           <div className="flex items-center space-x-2 text-sm">
             <Button 
