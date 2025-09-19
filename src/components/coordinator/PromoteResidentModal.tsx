@@ -267,7 +267,7 @@ export const PromoteResidentModal = ({ residents, onPromotionSuccess }: PromoteR
           )}
 
           {/* Botões */}
-          <div className="flex justify-end space-x-3">
+          <div className="mobile-buttons-container">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
               Cancelar
             </Button>

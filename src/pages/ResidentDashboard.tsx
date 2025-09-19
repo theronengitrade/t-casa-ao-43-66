@@ -148,8 +148,10 @@ const ResidentDashboard = () => {
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg sm:text-xl font-semibold truncate">Portal do Residente</h1>
                   {condominiumInfo && (
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                      {condominiumInfo.name}
+                    <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">
+                      <span className="mobile-header-truncate">
+                        {condominiumInfo.name}
+                      </span>
                     </p>
                   )}
                 </div>

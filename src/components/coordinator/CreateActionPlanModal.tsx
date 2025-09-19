@@ -87,7 +87,7 @@ export function CreateActionPlanModal({ isOpen, onClose, onSuccess }: CreateActi
           <DialogTitle>Criar Novo Plano de Ação</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mobile-form-content">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Label htmlFor="title">Título *</Label>
@@ -174,7 +174,7 @@ export function CreateActionPlanModal({ isOpen, onClose, onSuccess }: CreateActi
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="mobile-buttons-container">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>

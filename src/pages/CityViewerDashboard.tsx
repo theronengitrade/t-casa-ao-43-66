@@ -294,9 +294,13 @@ const CityViewerDashboard = () => {
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
             <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <h1 className="text-sm sm:text-base font-semibold truncate">Visualizador de Cidades & Condomínios</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                Bem-vindo, {profile.first_name} {profile.last_name}
+              <h1 className="text-sm sm:text-base font-semibold mobile-header-wrap">
+                <span className="mobile-header-truncate">Visualizador de Cidades & Condomínios</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">
+                <span className="mobile-header-truncate">
+                  Bem-vindo, {profile.first_name} {profile.last_name}
+                </span>
               </p>
             </div>
           </div>
