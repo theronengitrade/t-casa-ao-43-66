@@ -166,9 +166,16 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <img src={tcasaLogo} alt="T-Casa by Theron Engitrade" className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-auto" />
-            <span className="hidden sm:inline text-xs sm:text-sm text-muted-foreground">by Theron Engitrade</span>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <img 
+              src={tcasaLogo} 
+              alt="T-Casa by Theron Engitrade" 
+              className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain flex-shrink-0" 
+            />
+            <div className="flex flex-col">
+              <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary">T-Casa</span>
+              <span className="hidden sm:block text-xs text-muted-foreground">by Theron Engitrade</span>
+            </div>
           </div>
           
           <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">

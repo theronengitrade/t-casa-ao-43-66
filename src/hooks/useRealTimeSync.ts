@@ -67,14 +67,16 @@ export function useRealTimeSync(options: RealtimeSyncOptions) {
         },
         (payload) => handleRealtimeEvent('DELETE', payload)
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         console.log(`[REALTIME] Channel ${channelName} status:`, status);
         
         if (status === 'SUBSCRIBED') {
           console.log(`✅ Real-time sync enabled for ${options.table}`);
         } else if (status === 'CHANNEL_ERROR') {
-          console.error(`❌ Real-time sync failed for ${options.table}`);
-          toast.error(`Erro na sincronização em tempo real: ${options.table}`);
+          console.warn(`⚠️ Real-time sync connection issue for ${options.table}:`, err);
+          // Don't show toast for connection issues to avoid spam
+        } else if (status === 'CLOSED') {
+          console.log(`📡 Real-time sync closed for ${options.table}`);
         }
       });
 

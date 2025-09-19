@@ -249,6 +249,61 @@ All colors MUST be HSL and based on T-Casa branding.
     max-width: 100%;
   }
 
+  /* Fixed header system with proper content spacing */
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Dynamic header height variables */
+  :root {
+    --header-height-mobile: 3.5rem; /* 56px */
+    --header-height-desktop: 4rem; /* 64px */
+  }
+
+  /* Fixed header positioning */
+  .mobile-fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: var(--header-height-mobile);
+    background: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--border));
+    backdrop-filter: blur(8px);
+    background-color: hsl(var(--background) / 0.95);
+  }
+
+  @media (min-width: 640px) {
+    .mobile-fixed-header {
+      height: var(--header-height-desktop);
+    }
+  }
+
+  /* Content offset to prevent header overlap */
+  .mobile-body-offset {
+    padding-top: var(--header-height-mobile);
+  }
+
+  @media (min-width: 640px) {
+    .mobile-body-offset {
+      padding-top: var(--header-height-desktop);
+    }
+  }
+
+  /* Main content spacing */
+  .mobile-main-content {
+    /* No additional padding needed as body offset handles this */
+    min-height: calc(100vh - var(--header-height-mobile));
+  }
+
+  @media (min-width: 640px) {
+    .mobile-main-content {
+      min-height: calc(100vh - var(--header-height-desktop));
+    }
+  }
+
   /* Mobile-optimized cards */
   .mobile-card {
     border-radius: 0.75rem;
