@@ -2,40 +2,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, 
-  Shield, 
-  Users, 
-  FileText, 
-  CreditCard, 
-  BarChart3, 
-  Bell, 
-  Clock, 
-  CheckCircle,
-  AlertTriangle,
-  TrendingDown,
-  XCircle,
-  Zap,
-  Star,
-  Calendar,
-  MessageCircle,
-  Download,
-  Smartphone,
-  Eye
-} from "lucide-react";
+import { ArrowRight, Shield, Users, FileText, CreditCard, BarChart3, Bell, Clock, CheckCircle, AlertTriangle, TrendingDown, XCircle, Zap, Star, Calendar, MessageCircle, Download, Smartphone, Eye } from "lucide-react";
 import heroImage from "/lovable-uploads/3513bb45-0d94-401d-9325-563bbbe89819.png";
 import dashboardImage from "@/assets/dashboard-preview.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import tcasaLogo from "/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png";
 import residentsImage from "@/assets/residents-happy.jpg";
 import { ResidentRegistrationModal } from "./ResidentRegistrationModal";
-
 interface LandingPageProps {
   onOpenAuth: () => void;
 }
-
-const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
-  const { user } = useAuth();
+const LandingPage = ({
+  onOpenAuth
+}: LandingPageProps) => {
+  const {
+    user
+  } = useAuth();
   const [showResidentModal, setShowResidentModal] = useState(false);
 
   // Redirect to dashboard if user is already logged in
@@ -43,138 +25,103 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
     window.location.href = '/dashboard';
     return null;
   }
-
-  const problems = [
-    {
-      icon: <CreditCard className="h-8 w-8" />,
-      title: "Cobranças Manuais",
-      description: "Horas perdidas com planilhas confusas e lembretes manuais de pagamento"
-    },
-    {
-      icon: <BarChart3 className="h-8 w-8" />,
-      title: "Falta de Relatórios",
-      description: "Ausência de relatórios financeiros claros e dados organizados"
-    },
-    {
-      icon: <AlertTriangle className="h-8 w-8" />,
-      title: "Reclamações Constantes",
-      description: "Moradores insatisfeitos pela falta de transparência na gestão"
-    },
-    {
-      icon: <FileText className="h-8 w-8" />,
-      title: "Gestão Confusa",
-      description: "Ocorrências, reservas e manutenções desorganizadas e mal controladas"
-    },
-    {
-      icon: <Clock className="h-8 w-8" />,
-      title: "Tempo Perdido",
-      description: "Tarefas repetitivas que consomem tempo precioso do síndico"
-    },
-    {
-      icon: <XCircle className="h-8 w-8" />,
-      title: "Inadimplência",
-      description: "Moradores em atraso sem controle eficaz de cobrança"
-    }
-  ];
-
-  const implications = [
-    {
-      icon: <TrendingDown className="h-8 w-8 text-red-500" />,
-      title: "Inadimplência Crescente",
-      description: "Sem controle adequado, os atrasos se tornam crônicos"
-    },
-    {
-      icon: <XCircle className="h-8 w-8 text-red-500" />,
-      title: "Perda de Credibilidade",
-      description: "Moradores perdem confiança na administração"
-    },
-    {
-      icon: <AlertTriangle className="h-8 w-8 text-red-500" />,
-      title: "Desorganização Financeira",
-      description: "Contas confusas e falta de transparência"
-    },
-    {
-      icon: <Clock className="h-8 w-8 text-red-500" />,
-      title: "Sobrecarga de Trabalho",
-      description: "Quanto maior o condomínio, mais difícil fica controlar tudo"
-    }
-  ];
-
-  const solutions = [
-    {
-      icon: <Zap className="h-8 w-8" />,
-      title: "Automatização de Cobranças",
-      description: "Moradores recebem lembretes automáticos via WhatsApp e email"
-    },
-    {
-      icon: <BarChart3 className="h-8 w-8" />,
-      title: "Controle em Tempo Real",
-      description: "Dashboard com pagamentos, receitas e inadimplência instantâneos"
-    },
-    {
-      icon: <FileText className="h-8 w-8" />,
-      title: "Relatórios Financeiros Claros",
-      description: "Relatórios profissionais gerados automaticamente"
-    },
-    {
-      icon: <Calendar className="h-8 w-8" />,
-      title: "Gestão Completa de Manutenções",
-      description: "Reservas de espaços e ocorrências organizadas em poucos cliques"
-    },
-    {
-      icon: <Users className="h-8 w-8" />,
-      title: "Cadastro Completo",
-      description: "Moradores, visitantes e prestadores organizados"
-    },
-    {
-      icon: <Download className="h-8 w-8" />,
-      title: "Documentos Digitais",
-      description: "Centralização de documentos e anúncios digitais"
-    },
-    {
-      icon: <MessageCircle className="h-8 w-8" />,
-      title: "Chat Interno",
-      description: "Comunicação direta entre gestão e moradores"
-    },
-    {
-      icon: <Shield className="h-8 w-8" />,
-      title: "Segurança Total",
-      description: "Dados 100% seguros com criptografia AES256"
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: "Dr. Carlos Silva",
-      role: "Síndico - Edifício Torres do Mar",
-      quote: "O T-Casa reduziu minha inadimplência em 40% nos primeiros 3 meses. Os moradores agora têm transparência total."
-    },
-    {
-      name: "Ana Beatriz",
-      role: "Administradora - Residencial Atlântida",
-      quote: "Gerencio 8 condomínios com o T-Casa. O que antes levava horas, agora faço em minutos. É transformador."
-    },
-    {
-      name: "João Mendes",
-      role: "Síndico - Condomínio Vila Real",
-      quote: "Acabaram as planilhas confusas. Agora tenho relatórios profissionais e moradores satisfeitos."
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
+  const problems = [{
+    icon: <CreditCard className="h-8 w-8" />,
+    title: "Cobranças Manuais",
+    description: "Horas perdidas com planilhas confusas e lembretes manuais de pagamento"
+  }, {
+    icon: <BarChart3 className="h-8 w-8" />,
+    title: "Falta de Relatórios",
+    description: "Ausência de relatórios financeiros claros e dados organizados"
+  }, {
+    icon: <AlertTriangle className="h-8 w-8" />,
+    title: "Reclamações Constantes",
+    description: "Moradores insatisfeitos pela falta de transparência na gestão"
+  }, {
+    icon: <FileText className="h-8 w-8" />,
+    title: "Gestão Confusa",
+    description: "Ocorrências, reservas e manutenções desorganizadas e mal controladas"
+  }, {
+    icon: <Clock className="h-8 w-8" />,
+    title: "Tempo Perdido",
+    description: "Tarefas repetitivas que consomem tempo precioso do síndico"
+  }, {
+    icon: <XCircle className="h-8 w-8" />,
+    title: "Inadimplência",
+    description: "Moradores em atraso sem controle eficaz de cobrança"
+  }];
+  const implications = [{
+    icon: <TrendingDown className="h-8 w-8 text-red-500" />,
+    title: "Inadimplência Crescente",
+    description: "Sem controle adequado, os atrasos se tornam crônicos"
+  }, {
+    icon: <XCircle className="h-8 w-8 text-red-500" />,
+    title: "Perda de Credibilidade",
+    description: "Moradores perdem confiança na administração"
+  }, {
+    icon: <AlertTriangle className="h-8 w-8 text-red-500" />,
+    title: "Desorganização Financeira",
+    description: "Contas confusas e falta de transparência"
+  }, {
+    icon: <Clock className="h-8 w-8 text-red-500" />,
+    title: "Sobrecarga de Trabalho",
+    description: "Quanto maior o condomínio, mais difícil fica controlar tudo"
+  }];
+  const solutions = [{
+    icon: <Zap className="h-8 w-8" />,
+    title: "Automatização de Cobranças",
+    description: "Moradores recebem lembretes automáticos via WhatsApp e email"
+  }, {
+    icon: <BarChart3 className="h-8 w-8" />,
+    title: "Controle em Tempo Real",
+    description: "Dashboard com pagamentos, receitas e inadimplência instantâneos"
+  }, {
+    icon: <FileText className="h-8 w-8" />,
+    title: "Relatórios Financeiros Claros",
+    description: "Relatórios profissionais gerados automaticamente"
+  }, {
+    icon: <Calendar className="h-8 w-8" />,
+    title: "Gestão Completa de Manutenções",
+    description: "Reservas de espaços e ocorrências organizadas em poucos cliques"
+  }, {
+    icon: <Users className="h-8 w-8" />,
+    title: "Cadastro Completo",
+    description: "Moradores, visitantes e prestadores organizados"
+  }, {
+    icon: <Download className="h-8 w-8" />,
+    title: "Documentos Digitais",
+    description: "Centralização de documentos e anúncios digitais"
+  }, {
+    icon: <MessageCircle className="h-8 w-8" />,
+    title: "Chat Interno",
+    description: "Comunicação direta entre gestão e moradores"
+  }, {
+    icon: <Shield className="h-8 w-8" />,
+    title: "Segurança Total",
+    description: "Dados 100% seguros com criptografia AES256"
+  }];
+  const testimonials = [{
+    name: "Dr. Carlos Silva",
+    role: "Síndico - Edifício Torres do Mar",
+    quote: "O T-Casa reduziu minha inadimplência em 40% nos primeiros 3 meses. Os moradores agora têm transparência total."
+  }, {
+    name: "Ana Beatriz",
+    role: "Administradora - Residencial Atlântida",
+    quote: "Gerencio 8 condomínios com o T-Casa. O que antes levava horas, agora faço em minutos. É transformador."
+  }, {
+    name: "João Mendes",
+    role: "Síndico - Condomínio Vila Real",
+    quote: "Acabaram as planilhas confusas. Agora tenho relatórios profissionais e moradores satisfeitos."
+  }];
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <img 
-              src={tcasaLogo} 
-              alt="T-Casa by Theron Engitrade" 
-              className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain flex-shrink-0" 
-            />
+            <img src={tcasaLogo} alt="T-Casa by Theron Engitrade" className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain flex-shrink-0" />
             <div className="flex flex-col">
-              <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary">T-Casa</span>
-              <span className="hidden sm:block text-xs text-muted-foreground">by Theron Engitrade</span>
+              
+              <span className="hidden sm:block text-xs text-muted-foreground">by Theron EngiTrade</span>
             </div>
           </div>
           
@@ -252,11 +199,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
 
             <div className="relative order-first lg:order-last">
               <div className="absolute -inset-2 sm:-inset-4 hero-gradient rounded-2xl sm:rounded-3xl blur opacity-30"></div>
-              <img 
-                src={heroImage} 
-                alt="Transformação real na gestão condominial - Antes: caos e estresse, Depois: controle total" 
-                className="relative rounded-xl sm:rounded-2xl shadow-2xl w-full h-auto"
-              />
+              <img src={heroImage} alt="Transformação real na gestão condominial - Antes: caos e estresse, Depois: controle total" className="relative rounded-xl sm:rounded-2xl shadow-2xl w-full h-auto" />
             </div>
           </div>
         </div>
@@ -279,8 +222,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {problems.map((problem, index) => (
-              <Card key={index} className="border-red-200 bg-white/50 hover:shadow-lg transition-all">
+            {problems.map((problem, index) => <Card key={index} className="border-red-200 bg-white/50 hover:shadow-lg transition-all">
                 <CardHeader className="text-center p-4 sm:p-6">
                   <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-red-100 rounded-xl sm:rounded-2xl flex items-center justify-center text-red-600 mb-3 sm:mb-4">
                     {problem.icon}
@@ -292,8 +234,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
                     {problem.description}
                   </CardDescription>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -315,8 +256,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {implications.map((implication, index) => (
-              <Card key={index} className="border-orange-200 bg-gradient-to-br from-white to-orange-50/50 hover:shadow-lg transition-all">
+            {implications.map((implication, index) => <Card key={index} className="border-orange-200 bg-gradient-to-br from-white to-orange-50/50 hover:shadow-lg transition-all">
                 <CardHeader className="text-center p-4 sm:p-6">
                   <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-red-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4">
                     {implication.icon}
@@ -328,8 +268,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
                     {implication.description}
                   </CardDescription>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -351,8 +290,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
-            {solutions.map((solution, index) => (
-              <Card key={index} className="border-green-200 bg-gradient-to-br from-white to-green-50/50 hover:shadow-lg transition-all hover:scale-105">
+            {solutions.map((solution, index) => <Card key={index} className="border-green-200 bg-gradient-to-br from-white to-green-50/50 hover:shadow-lg transition-all hover:scale-105">
                 <CardHeader className="text-center p-4 sm:p-6">
                   <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center text-green-600 mb-3 sm:mb-4">
                     {solution.icon}
@@ -364,8 +302,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
                     {solution.description}
                   </CardDescription>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           {/* Dashboard Preview */}
@@ -379,25 +316,14 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
                 de forma eficiente, organizada e profissional.
               </p>
               <ul className="space-y-2 sm:space-y-3">
-                {[
-                  "Visão geral completa em tempo real",
-                  "Relatórios visuais e interativos", 
-                  "Acesso móvel 24/7",
-                  "Notificações automáticas inteligentes"
-                ].map((item, index) => (
-                  <li key={index} className="flex items-center space-x-2 sm:space-x-3">
+                {["Visão geral completa em tempo real", "Relatórios visuais e interativos", "Acesso móvel 24/7", "Notificações automáticas inteligentes"].map((item, index) => <li key={index} className="flex items-center space-x-2 sm:space-x-3">
                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                     <span className="text-sm sm:text-base">{item}</span>
-                  </li>
-                ))}
+                  </li>)}
               </ul>
             </div>
             <div className="relative order-1 lg:order-2">
-              <img 
-                src={dashboardImage} 
-                alt="Dashboard T-Casa - Interface profissional e intuitiva" 
-                className="rounded-xl sm:rounded-2xl shadow-2xl w-full h-auto"
-              />
+              <img src={dashboardImage} alt="Dashboard T-Casa - Interface profissional e intuitiva" className="rounded-xl sm:rounded-2xl shadow-2xl w-full h-auto" />
             </div>
           </div>
         </div>
@@ -441,13 +367,10 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
 
           {/* Testimonials */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-white/50 border-primary/20 hover:shadow-lg transition-all">
+            {testimonials.map((testimonial, index) => <Card key={index} className="bg-white/50 border-primary/20 hover:shadow-lg transition-all">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex mb-3 sm:mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-yellow-400 fill-current" />
-                    ))}
+                    {[...Array(5)].map((_, i) => <Star key={i} className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-yellow-400 fill-current" />)}
                   </div>
                   <blockquote className="text-sm sm:text-base text-muted-foreground italic mb-3 sm:mb-4">
                     "{testimonial.quote}"
@@ -457,8 +380,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
                     <div className="text-xs sm:text-sm text-muted-foreground">{testimonial.role}</div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
 
           {/* Authority Badges */}
@@ -499,22 +421,13 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
           </p>
           
           <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:gap-4 lg:gap-6 justify-center items-center pt-4 sm:pt-6 lg:pt-8">
-            <Button 
-              size="lg" 
-              className="bg-white text-primary hover:bg-gray-100 font-semibold text-sm sm:text-base lg:text-lg px-4 sm:px-6 lg:px-8 py-3 sm:py-4 h-auto w-full sm:w-auto" 
-              onClick={onOpenAuth}
-            >
+            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold text-sm sm:text-base lg:text-lg px-4 sm:px-6 lg:px-8 py-3 sm:py-4 h-auto w-full sm:w-auto" onClick={onOpenAuth}>
               <Eye className="mr-2 h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               <span className="hidden sm:inline">Solicite uma Demonstração Gratuita</span>
               <span className="sm:hidden">Demonstração Gratuita</span>
               <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary font-semibold text-sm sm:text-base lg:text-lg px-4 sm:px-6 lg:px-8 py-3 sm:py-4 h-auto w-full sm:w-auto"
-              onClick={() => setShowResidentModal(true)}
-            >
+            <Button size="lg" variant="outline" className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary font-semibold text-sm sm:text-base lg:text-lg px-4 sm:px-6 lg:px-8 py-3 sm:py-4 h-auto w-full sm:w-auto" onClick={() => setShowResidentModal(true)}>
               <Smartphone className="mr-2 h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               <span className="hidden sm:inline">Clique e Descubra o T-Casa Hoje Mesmo</span>
               <span className="sm:hidden">Descubra o T-Casa</span>
@@ -557,12 +470,7 @@ const LandingPage = ({ onOpenAuth }: LandingPageProps) => {
       </footer>
 
       {/* Modals */}
-      <ResidentRegistrationModal 
-        isOpen={showResidentModal} 
-        onClose={() => setShowResidentModal(false)} 
-      />
-    </div>
-  );
+      <ResidentRegistrationModal isOpen={showResidentModal} onClose={() => setShowResidentModal(false)} />
+    </div>;
 };
-
 export default LandingPage;
