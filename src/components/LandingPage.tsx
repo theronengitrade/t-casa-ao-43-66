@@ -154,10 +154,7 @@ const LandingPage = ({
           <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
             <div className="space-y-4 sm:space-y-6 lg:space-y-8">
               <div className="space-y-3 sm:space-y-4">
-                <Badge className="inline-flex items-center space-x-1 sm:space-x-2 bg-primary/10 text-primary border-primary/20 text-xs sm:text-sm px-2 sm:px-3 py-1">
-                  <span>🏢</span>
-                  <span>Sistema Profissional para Condomínios</span>
-                </Badge>
+                
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight">
                   A gestão do seu condomínio pode ser{" "}
                   <span className="text-primary">muito mais simples</span>
