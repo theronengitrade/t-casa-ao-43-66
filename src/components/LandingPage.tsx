@@ -121,7 +121,7 @@ const LandingPage = ({
             <img src={tcasaLogo} alt="T-Casa by Theron Engitrade" className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain flex-shrink-0" />
             <div className="flex flex-col">
               
-              <span className="hidden sm:block text-xs text-muted-foreground">by Theron EngiTrade</span>
+              
             </div>
           </div>
           
