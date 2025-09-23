@@ -456,7 +456,7 @@ const LandingPage = ({
               <img src={tcasaLogo} alt="T-Casa" className="h-6 w-6 sm:h-8 sm:w-8" />
               <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 <div className="font-semibold">Sistema de Gestão de Condomínios</div>
-                <div className="text-xs">Desenvolvido pela Theron Engitrade</div>
+                <div className="text-xs">Desenvolvido pela Theron Engitrade,Lda</div>
               </div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground text-center">
