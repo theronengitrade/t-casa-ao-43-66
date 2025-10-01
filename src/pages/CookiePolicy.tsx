@@ -2,10 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 const CookiePolicy = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+  return <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
@@ -144,14 +142,12 @@ const CookiePolicy = () => {
               <h2 className="text-2xl font-semibold mb-3 text-foreground">8. Contacto</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Se tiver questões sobre a nossa utilização de cookies, contacte-nos através do email: 
-                <span className="font-medium text-primary"> cookies@tcasa.ao</span>
+                <span className="font-medium text-primary">info@t-casa.pt</span>
               </p>
             </section>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default CookiePolicy;
