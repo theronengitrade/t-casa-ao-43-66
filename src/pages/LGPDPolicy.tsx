@@ -169,7 +169,7 @@ const LGPDPolicy = () => {
                 <p className="text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">Contacto DPO:</span>
                   <br />
-                  Email: <span className="text-primary font-medium">info@tcasa.pt</span>
+                  Email: <span className="text-primary font-medium">info@t-casa.pt</span>
                   <br />
                   Telefone: <span className="text-primary font-medium">+244 933 696 567</span>
                 </p>
