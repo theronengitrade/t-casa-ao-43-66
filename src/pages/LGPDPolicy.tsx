@@ -2,10 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 const LGPDPolicy = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+  return <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
@@ -173,7 +171,7 @@ const LGPDPolicy = () => {
                   <br />
                   Email: <span className="text-primary font-medium">dpo@tcasa.ao</span>
                   <br />
-                  Telefone: <span className="text-primary font-medium">+244 XXX XXX XXX</span>
+                  Telefone: <span className="text-primary font-medium">+244 933 696 567</span>
                 </p>
               </div>
             </section>
@@ -205,8 +203,6 @@ const LGPDPolicy = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default LGPDPolicy;
