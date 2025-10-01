@@ -449,18 +449,70 @@ const LandingPage = ({
       </section>
 
       {/* Footer */}
-      <footer className="bg-muted py-6 sm:py-8">
-        <div className="container mx-auto px-3 sm:px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
-            <div className="flex items-center space-x-2">
-              <img src={tcasaLogo} alt="T-Casa" className="h-6 w-6 sm:h-8 sm:w-8" />
-              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-                <div className="font-semibold">Sistema de Gestão de Condomínios</div>
-                <div className="text-xs">Desenvolvido pela Theron Engitrade,Lda</div>
+      <footer className="bg-muted py-8 sm:py-12 border-t border-border">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <img src={tcasaLogo} alt="T-Casa" className="h-10 w-10" />
+                <div>
+                  <div className="font-bold text-foreground">T-Casa</div>
+                  <div className="text-xs text-muted-foreground">Sistema de Gestão de Condomínios</div>
+                </div>
               </div>
+              <p className="text-sm text-muted-foreground">
+                Desenvolvido pela Theron Engitrade, Lda
+              </p>
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground text-center">
-              © 2024 Theron Engitrade. Todos os direitos reservados.
+
+            {/* Legal Links */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Informações Legais</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    Política de Privacidade
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
+                    Termos de Uso
+                  </a>
+                </li>
+                <li>
+                  <a href="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    Política de Cookies
+                  </a>
+                </li>
+                <li>
+                  <a href="/lgpd-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    LGPD & Proteção de Dados
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Contacto</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Email: info@tcasa.ao</li>
+                <li>Suporte: suporte@tcasa.ao</li>
+                <li>Telefone: +244 XXX XXX XXX</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-6 mt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                © 2024 Theron Engitrade. Todos os direitos reservados.
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <Shield className="h-4 w-4" />
+                <span>Seus dados estão protegidos</span>
+              </div>
             </div>
           </div>
         </div>

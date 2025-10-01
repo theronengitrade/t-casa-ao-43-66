@@ -95,34 +95,48 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <img src={tcasaLogo} alt="T-Casa" className="h-10 w-auto" />
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto mobile-modal border-0 shadow-2xl bg-gradient-to-br from-background via-background to-accent/5">
+        <DialogHeader className="space-y-4 pb-4 border-b border-border/50">
+          <DialogTitle className="sr-only">Autenticação T-Casa</DialogTitle>
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
+              <img src={tcasaLogo} alt="T-Casa" className="h-16 w-auto relative z-10 drop-shadow-lg" />
             </div>
-          </DialogTitle>
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary via-brand-secondary to-primary bg-clip-text text-transparent">
+                Sistema T-Casa
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Gestão inteligente de condomínios
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Entrar</TabsTrigger>
-            <TabsTrigger value="register">Registar</TabsTrigger>
+        <Tabs defaultValue="login" className="w-full mt-6">
+          <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 h-12">
+            <TabsTrigger value="login" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Entrar
+            </TabsTrigger>
+            <TabsTrigger value="register" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-md">
+              Registar
+            </TabsTrigger>
           </TabsList>
 
           {/* Login Tab */}
-          <TabsContent value="login" className="space-y-4">
-            <Card>
-              <CardHeader className="space-y-1">
-                <CardTitle className="text-xl text-center">Entrar no Sistema</CardTitle>
-                <CardDescription className="text-center">
-                  Aceda à sua conta T-Casa
+          <TabsContent value="login" className="space-y-4 mt-6">
+            <Card className="border-0 shadow-none bg-transparent">
+              <CardHeader className="space-y-2 pb-6">
+                <CardTitle className="text-xl text-center font-semibold">Entrar no Sistema</CardTitle>
+                <CardDescription className="text-center text-sm">
+                  Aceda à sua conta T-Casa com as suas credenciais
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
+              <CardContent className="space-y-6">
+                <form onSubmit={handleLogin} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -130,11 +144,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       value={loginForm.email}
                       onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
                       required
+                      className="h-11 bg-background/50 border-border/50 focus:border-primary focus:ring-primary"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password">Palavra-passe</Label>
+                    <Label htmlFor="password" className="text-sm font-medium">Palavra-passe</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -143,43 +158,48 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                         value={loginForm.password}
                         onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
                         required
+                        className="h-11 bg-background/50 border-border/50 focus:border-primary focus:ring-primary pr-10"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                    disabled={isLoading}
+                  >
                     {isLoading ? "A entrar..." : "Entrar"}
                   </Button>
                 </form>
 
-                <div className="mt-4 space-y-2">
-                  <div className="text-center text-sm text-muted-foreground">
-                    Tipos de acesso:
+                <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
+                  <div className="text-center text-xs text-muted-foreground font-medium">
+                    Tipos de acesso disponíveis:
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    <Badge variant="outline" className="text-xs">
-                      <UserCog className="w-3 h-3 mr-1" />
+                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
+                      <UserCog className="w-3 h-3 mr-1.5" />
                       Coordenador
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      <Users className="w-3 h-3 mr-1" />
+                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
+                      <Users className="w-3 h-3 mr-1.5" />
                       Residente
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      <Building2 className="w-3 h-3 mr-1" />
+                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
+                      <Building2 className="w-3 h-3 mr-1.5" />
                       Super Admin
                     </Badge>
                   </div>
