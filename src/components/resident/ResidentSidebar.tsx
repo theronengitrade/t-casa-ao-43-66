@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useCoordinationPermissions } from "@/hooks/useCoordinationPermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
+import tcasaLogo from "/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png";
 
 interface ResidentSidebarProps {
   activeTab: string;
@@ -119,6 +120,15 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
   return (
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} mobile-tap flex-shrink-0 sidebar-3d`}>
       <SidebarContent className="flex flex-col h-full">
+        {/* Logo Section - Always Visible */}
+        <div className="p-4 border-b border-sidebar-border/30 bg-gradient-to-r from-primary/5 to-transparent flex items-center justify-center">
+          <img 
+            src={tcasaLogo} 
+            alt="T-Casa" 
+            className={`${collapsed ? "h-8 w-8" : "h-10 w-auto"} transition-all duration-200`} 
+          />
+        </div>
+
         {/* Fixed Header Section */}
         <div className={`${collapsed ? "hidden" : "block"} border-b border-sidebar-border/30 bg-transparent`}>
           <div className="p-4 space-y-4">

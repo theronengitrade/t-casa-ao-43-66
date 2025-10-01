@@ -100,14 +100,14 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           <DialogTitle className="sr-only">Autenticação T-Casa</DialogTitle>
           <div className="flex flex-col items-center justify-center space-y-3">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full"></div>
-              <img src={tcasaLogo} alt="T-Casa" className="h-16 w-auto relative z-10 drop-shadow-lg" />
+              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
+              <img src={tcasaLogo} alt="T-Casa" className="h-12 w-auto relative z-10 drop-shadow-lg" />
             </div>
             <div className="text-center space-y-1">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary via-brand-secondary to-primary bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-brand-secondary to-primary bg-clip-text text-transparent">
                 Sistema T-Casa
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Gestão inteligente de condomínios
               </p>
             </div>

@@ -30,6 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import tcasaLogo from "/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png";
 
 interface CoordinatorSidebarProps {
   activeSection: string;
@@ -75,6 +76,15 @@ export function CoordinatorSidebar({ activeSection, setActiveSection }: Coordina
   return (
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} mobile-tap sidebar-3d`}>
       <SidebarContent>
+        {/* Logo Section */}
+        <div className="p-4 border-b border-sidebar-border/30 bg-gradient-to-r from-primary/5 to-transparent flex items-center justify-center">
+          <img 
+            src={tcasaLogo} 
+            alt="T-Casa" 
+            className={`${collapsed ? "h-8 w-8" : "h-10 w-auto"} transition-all duration-200`} 
+          />
+        </div>
+
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : "px-6 py-4 text-sm font-semibold text-muted-foreground"}>
             Gestão do Condomínio
