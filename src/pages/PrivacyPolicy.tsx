@@ -106,7 +106,7 @@ const PrivacyPolicy = () => {
               <h2 className="text-2xl font-semibold mb-3 text-foreground">8. Contacto</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Para exercer os seus direitos ou esclarecer dúvidas sobre esta Política de Privacidade, 
-                entre em contacto connosco através do email: <span className="font-medium text-primary">info@tcasa.pt</span>
+                entre em contacto connosco através do email: <span className="font-medium text-primary">info@t-casa.pt</span>
               </p>
             </section>
           </CardContent>
