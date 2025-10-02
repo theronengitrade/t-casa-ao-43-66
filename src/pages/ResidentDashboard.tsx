@@ -138,7 +138,7 @@ const ResidentDashboard = () => {
         />
 
         {/* Main Content using SidebarInset for proper spacing */}
-        <SidebarInset className="flex-1 flex flex-col h-screen overflow-y-auto mobile-scroll mobile-responsive-content">
+        <SidebarInset className="flex-1 flex flex-col overflow-y-auto mobile-scroll mobile-responsive-content">
           {/* Header */}
           <header className="mobile-fixed-header px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
             <div className="flex items-center justify-between mobile-flex-wrap">
