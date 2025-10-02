@@ -58,7 +58,7 @@ export function SuperAdminSidebar({ activeSection, setActiveSection }: SuperAdmi
           <img 
             src={tcasaLogo} 
             alt="T-Casa" 
-            className={`${collapsed ? "h-3 w-3" : "h-3 w-auto"} transition-all duration-200`} 
+            className={`${collapsed ? "h-2 w-2" : "h-2 w-auto"} transition-all duration-200`} 
           />
         </div>
 
