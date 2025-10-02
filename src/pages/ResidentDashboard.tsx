@@ -144,7 +144,6 @@ const ResidentDashboard = () => {
             <div className="flex items-center justify-between mobile-flex-wrap">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
-                <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-8 w-auto flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg sm:text-xl font-semibold truncate">Portal do Residente</h1>
                   {condominiumInfo && (

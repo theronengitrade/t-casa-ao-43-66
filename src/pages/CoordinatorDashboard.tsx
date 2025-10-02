@@ -312,7 +312,6 @@ const CoordinatorDashboard = () => {
           <header className="mobile-fixed-header flex items-center justify-between px-3 sm:px-6">
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
               <SidebarTrigger className="touch-target" />
-              <img src="/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png" alt="T-Casa" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
               <h1 className="text-sm sm:text-xl font-semibold mobile-header-wrap overflow-hidden">
                 <span className="hidden sm:inline">Coordenador - </span>
                 <span className="sm:hidden">Coord. - </span>

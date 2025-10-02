@@ -266,7 +266,6 @@ const SuperAdminDashboard = () => {
             <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
-                <img src={tcasaLogo} alt="T-Casa" className="h-6 sm:h-10 w-auto flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <h1 className="text-sm sm:text-base font-semibold truncate">Super Administração</h1>
                   <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">

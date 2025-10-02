@@ -125,7 +125,7 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
           <img 
             src={tcasaLogo} 
             alt="T-Casa" 
-            className={`${collapsed ? "h-8 w-8" : "h-10 w-auto"} transition-all duration-200`} 
+            className={`${collapsed ? "h-5 w-5" : "h-6 w-auto"} transition-all duration-200`} 
           />
         </div>
 
