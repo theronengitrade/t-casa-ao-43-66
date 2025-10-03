@@ -140,12 +140,13 @@ const CoordinatorProfile = ({ profile }: CoordinatorProfileProps) => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', profile.id);
+      // Temporarily commented until avatar_url column is added
+      // const { error: updateError } = await supabase
+      //   .from('profiles')
+      //   .update({ avatar_url: publicUrl })
+      //   .eq('id', profile.id);
 
-      if (updateError) throw updateError;
+      // if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
       toast({

@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Building2, UserCog, Users, Eye, EyeOff } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import tcasaLogo from "/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png";
@@ -20,9 +17,9 @@ interface AuthModalProps {
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const { toast } = useToast();
 
-  // Login form state
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: ""
@@ -33,7 +30,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     setIsLoading(true);
 
     try {
-      // Clear any existing corrupted session data before login
       localStorage.removeItem('supabase.auth.token');
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -44,7 +40,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
       if (error) {
         let errorMessage = error.message;
         
-        // Handle specific error cases
         if (error.message.includes('Invalid login credentials')) {
           errorMessage = 'Email ou palavra-passe incorretos.';
         } else if (error.message.includes('Email not confirmed')) {
@@ -67,7 +62,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           description: "Bem-vindo de volta!"
         });
         
-        // Small delay to ensure session is properly established
         setTimeout(() => {
           onClose();
         }, 500);
@@ -75,7 +69,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
     } catch (error) {
       console.error('Critical login error:', error);
       
-      // Force clear any corrupted state
       localStorage.clear();
       
       toast({
@@ -84,7 +77,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
         variant: "destructive"
       });
       
-      // Refresh page to reset completely
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -95,123 +87,135 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto mobile-modal border-0 shadow-2xl bg-gradient-to-br from-background via-background to-accent/5">
-        <DialogHeader className="space-y-4 pb-4 border-b border-border/50">
-          <DialogTitle className="sr-only">Autenticação T-Casa</DialogTitle>
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-              <img src={tcasaLogo} alt="T-Casa" className="h-12 w-auto relative z-10 drop-shadow-lg" />
+      <DialogContent className="max-w-md p-0 gap-0 border-0 bg-white/95 backdrop-blur-sm shadow-2xl overflow-hidden">
+        {showRegister ? (
+          <div className="p-6 max-h-[90vh] overflow-y-auto">
+            <NewResidentRegistration onClose={() => setShowRegister(false)} />
+          </div>
+        ) : (
+          <div className="p-8 space-y-6">
+            {/* Logo */}
+            <div className="flex justify-center mb-2">
+              <img src={tcasaLogo} alt="T-Casa" className="h-10 w-auto" />
             </div>
-            <div className="text-center space-y-1">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-primary via-brand-secondary to-primary bg-clip-text text-transparent">
-                Sistema T-Casa
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Gestão inteligente de condomínios
-              </p>
+
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  className="h-12 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#4A6FA5] focus:ring-[#4A6FA5]"
+                />
+              </div>
+              
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Senha"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  className="h-12 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#4A6FA5] focus:ring-[#4A6FA5] pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </Button>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full h-12 bg-[#4A6FA5] hover:bg-[#3D5A85] text-white font-semibold uppercase tracking-wide shadow-lg" 
+                disabled={isLoading}
+              >
+                {isLoading ? "A ENTRAR..." : "ACESSAR"}
+              </Button>
+            </form>
+
+            {/* Links */}
+            <div className="flex justify-between items-center text-sm">
+              <button 
+                type="button"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: "Recuperação de senha",
+                    description: "Entre em contacto com o administrador do condomínio para recuperar a sua senha.",
+                  });
+                }}
+              >
+                Esqueceu a senha?
+              </button>
+              <button 
+                type="button"
+                className="text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                onClick={() => setShowRegister(true)}
+              >
+                Cadastrar email
+              </button>
+            </div>
+
+            {/* Separator */}
+            <div className="relative">
+              <Separator className="bg-gray-200" />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs text-gray-400">
+                ou
+              </span>
+            </div>
+
+            {/* Social Login Buttons */}
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 font-normal justify-start px-4"
+                onClick={() => {
+                  toast({
+                    title: "Em breve",
+                    description: "Login com Google estará disponível em breve.",
+                  });
+                }}
+              >
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-5 h-5 mr-3"
+                />
+                Continuar com o Google
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 font-normal justify-start px-4"
+                onClick={() => {
+                  toast({
+                    title: "Em breve",
+                    description: "Login com Facebook estará disponível em breve.",
+                  });
+                }}
+              >
+                <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Continuar com o Facebook
+              </Button>
             </div>
           </div>
-        </DialogHeader>
-
-        <Tabs defaultValue="login" className="w-full mt-6">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 h-12">
-            <TabsTrigger value="login" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-md">
-              Entrar
-            </TabsTrigger>
-            <TabsTrigger value="register" className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-md">
-              Registar
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Login Tab */}
-          <TabsContent value="login" className="space-y-4 mt-6">
-            <Card className="border-0 shadow-none bg-transparent">
-              <CardHeader className="space-y-2 pb-6">
-                <CardTitle className="text-xl text-center font-semibold">Entrar no Sistema</CardTitle>
-                <CardDescription className="text-center text-sm">
-                  Aceda à sua conta T-Casa com as suas credenciais
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={loginForm.email}
-                      onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="h-11 bg-background/50 border-border/50 focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">Palavra-passe</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={loginForm.password}
-                        onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        className="h-11 bg-background/50 border-border/50 focus:border-primary focus:ring-primary pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "A entrar..." : "Entrar"}
-                  </Button>
-                </form>
-
-                <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
-                  <div className="text-center text-xs text-muted-foreground font-medium">
-                    Tipos de acesso disponíveis:
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
-                      <UserCog className="w-3 h-3 mr-1.5" />
-                      Coordenador
-                    </Badge>
-                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
-                      <Users className="w-3 h-3 mr-1.5" />
-                      Residente
-                    </Badge>
-                    <Badge variant="outline" className="text-xs px-3 py-1 bg-primary/5 border-primary/20">
-                      <Building2 className="w-3 h-3 mr-1.5" />
-                      Super Admin
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="register" className="space-y-4">
-            <NewResidentRegistration onClose={onClose} />
-          </TabsContent>
-        </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );

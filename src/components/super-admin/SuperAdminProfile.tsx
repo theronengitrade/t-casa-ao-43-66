@@ -25,7 +25,7 @@ const SuperAdminProfile = () => {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileData, setProfileData] = useState({
     first_name: '',
@@ -156,12 +156,13 @@ const SuperAdminProfile = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', user?.id);
+      // Temporarily commented until avatar_url column is added
+      // const { error: updateError } = await supabase
+      //   .from('profiles')
+      //   .update({ avatar_url: publicUrl })
+      //   .eq('user_id', user?.id);
 
-      if (updateError) throw updateError;
+      // if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
       toast({
