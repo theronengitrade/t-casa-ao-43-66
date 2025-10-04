@@ -121,7 +121,7 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} mobile-tap flex-shrink-0 sidebar-3d`}>
       <SidebarContent className="flex flex-col h-full">
         {/* Logo Section - Always Visible */}
-        <div className="p-4 border-b border-sidebar-border/30 bg-gradient-to-r from-primary/5 to-transparent flex items-center justify-center">
+        <div className="p-4 border-b border-sidebar-border/30 flex items-center justify-center">
           <img 
             src={tcasaLogo} 
             alt="T-Casa" 
@@ -130,7 +130,7 @@ const ResidentSidebar = ({ activeTab, onTabChange, profile, condominiumInfo }: R
         </div>
 
         {/* Fixed Header Section */}
-        <div className={`${collapsed ? "hidden" : "block"} border-b border-sidebar-border/30 bg-transparent`}>
+        <div className={`${collapsed ? "hidden" : "block"} border-b border-sidebar-border/30`}>
           <div className="p-4 space-y-4">
             {/* User Info Section */}
             <div className="flex items-center space-x-3">

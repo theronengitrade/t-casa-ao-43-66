@@ -77,7 +77,7 @@ export function CoordinatorSidebar({ activeSection, setActiveSection }: Coordina
     <Sidebar className={`${collapsed ? "w-16" : "w-64"} mobile-tap sidebar-3d`}>
       <SidebarContent>
         {/* Logo Section */}
-        <div className="p-4 border-b border-sidebar-border/30 bg-gradient-to-r from-primary/5 to-transparent flex items-center justify-center">
+        <div className="p-4 border-b border-sidebar-border/30 flex items-center justify-center">
           <img 
             src={tcasaLogo} 
             alt="T-Casa" 

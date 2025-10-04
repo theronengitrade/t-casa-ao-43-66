@@ -309,7 +309,7 @@ const CoordinatorDashboard = () => {
         
         <div className="flex-1 flex flex-col min-w-0 mobile-responsive-content">
           {/* Header */}
-          <header className="mobile-fixed-header flex items-center justify-between px-3 sm:px-6">
+          <header className="mobile-fixed-header flex items-center justify-between px-3 sm:px-6 bg-[hsl(var(--header-background))] text-white">
             <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
               <SidebarTrigger className="touch-target" />
               <h1 className="text-sm sm:text-xl font-semibold mobile-header-wrap overflow-hidden">
@@ -323,12 +323,12 @@ const CoordinatorDashboard = () => {
             
             <div className="flex items-center space-x-2 sm:space-x-4 mobile-flex-wrap">
               <div className="hidden md:flex items-center space-x-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm">
+                <User className="w-4 h-4 text-white" />
+                <span className="text-sm text-white">
                   {profile.first_name} {profile.last_name}
                 </span>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="touch-target">
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="touch-target text-white hover:bg-white/10">
                 <LogOut className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Sair</span>
               </Button>

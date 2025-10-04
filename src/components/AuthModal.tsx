@@ -94,11 +94,6 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           </div>
         ) : (
           <div className="p-8 space-y-6">
-            {/* Logo */}
-            <div className="flex justify-center mb-2">
-              <img src={tcasaLogo} alt="T-Casa" className="h-3 w-auto" />
-            </div>
-
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div>

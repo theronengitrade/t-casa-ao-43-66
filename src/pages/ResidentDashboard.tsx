@@ -140,14 +140,14 @@ const ResidentDashboard = () => {
         {/* Main Content using SidebarInset for proper spacing */}
         <SidebarInset className="flex-1 flex flex-col overflow-y-auto mobile-scroll mobile-responsive-content">
           {/* Header */}
-          <header className="mobile-fixed-header px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+          <header className="mobile-fixed-header px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0 bg-[hsl(var(--header-background))] text-white">
             <div className="flex items-center justify-between mobile-flex-wrap">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl font-semibold truncate">Portal do Residente</h1>
+                  <h1 className="text-lg sm:text-xl font-semibold truncate text-white">Portal do Residente</h1>
                   {condominiumInfo && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">
+                    <p className="text-xs sm:text-sm text-white/80 mobile-header-wrap">
                       <span className="mobile-header-truncate">
                         {condominiumInfo.name}
                       </span>
@@ -189,7 +189,7 @@ const ResidentDashboard = () => {
                       )}
                     </div>
                   </div>
-                <Button variant="outline" size="sm" onClick={signOut} className="flex-shrink-0 touch-target">
+                <Button variant="ghost" size="sm" onClick={signOut} className="flex-shrink-0 touch-target text-white hover:bg-white/10 border-white/20">
                   <LogOut className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Sair</span>
                 </Button>

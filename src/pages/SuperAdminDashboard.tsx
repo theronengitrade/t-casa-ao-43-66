@@ -262,13 +262,13 @@ const SuperAdminDashboard = () => {
         
         <div className="flex-1 flex flex-col mobile-responsive-content">
           {/* Header */}
-          <header className="mobile-fixed-header">
+          <header className="mobile-fixed-header bg-[hsl(var(--header-background))]">
             <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
                 <SidebarTrigger className="mr-1 sm:mr-2 flex-shrink-0 touch-target" />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-sm sm:text-base font-semibold truncate">Super Administração</h1>
-                  <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">
+                  <h1 className="text-sm sm:text-base font-semibold truncate text-white">Super Administração</h1>
+                  <p className="text-xs sm:text-sm text-white/80 mobile-header-wrap">
                     <span className="mobile-header-truncate">
                       Bem-vindo, {profile.first_name} {profile.last_name}
                     </span>
@@ -277,21 +277,21 @@ const SuperAdminDashboard = () => {
               </div>
               
               <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 mobile-flex-wrap">
-                <Badge variant="default" className="hidden sm:flex items-center space-x-1">
+                <Badge variant="secondary" className="hidden sm:flex items-center space-x-1 bg-white/10 text-white border-white/20">
                   <Shield className="h-4 w-4" />
                   <span>Super Admin</span>
                 </Badge>
-                <Badge variant="default" className="sm:hidden">
+                <Badge variant="secondary" className="sm:hidden bg-white/10 text-white border-white/20">
                   <Shield className="h-3 w-3" />
                 </Badge>
                 {activeSection === "condominiums" && (
-                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="hidden sm:flex items-center space-x-2 touch-target">
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="hidden sm:flex items-center space-x-2 touch-target bg-white/10 text-white hover:bg-white/20 border-white/20">
                     <Plus className="h-4 w-4" />
                     <span>Criar Condomínio</span>
                   </Button>
                 )}
                 {activeSection === "condominiums" && (
-                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="sm:hidden touch-target">
+                  <Button onClick={() => setShowCreateWizard(true)} size="sm" className="sm:hidden touch-target bg-white/10 text-white hover:bg-white/20 border-white/20">
                     <Plus className="h-4 w-4" />
                   </Button>
                 )}
@@ -302,11 +302,11 @@ const SuperAdminDashboard = () => {
                     title: "Configurações",
                     description: "Funcionalidade de configurações em desenvolvimento."
                   })}
-                  className="hidden sm:flex touch-target"
+                  className="hidden sm:flex touch-target text-white hover:bg-white/10"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={signOut} className="touch-target">
+                <Button variant="ghost" size="sm" onClick={signOut} className="touch-target text-white hover:bg-white/10">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>
