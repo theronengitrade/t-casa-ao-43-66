@@ -96,7 +96,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
           <div className="p-8 space-y-6">
             {/* Logo */}
             <div className="flex justify-center mb-2">
-              <img src={tcasaLogo} alt="T-Casa" className="h-10 w-auto" />
+              <img src={tcasaLogo} alt="T-Casa" className="h-3 w-auto" />
             </div>
 
             {/* Login Form */}
@@ -150,11 +150,33 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               <button 
                 type="button"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: "Recuperação de senha",
-                    description: "Entre em contacto com o administrador do condomínio para recuperar a sua senha.",
+                onClick={async () => {
+                  const email = loginForm.email;
+                  if (!email) {
+                    toast({
+                      title: "Email necessário",
+                      description: "Por favor, insira o seu email para recuperar a senha.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/`,
                   });
+                  
+                  if (error) {
+                    toast({
+                      title: "Erro",
+                      description: error.message,
+                      variant: "destructive"
+                    });
+                  } else {
+                    toast({
+                      title: "Email enviado",
+                      description: "Verifique o seu email para redefinir a senha.",
+                    });
+                  }
                 }}
               >
                 Esqueceu a senha?
@@ -182,11 +204,21 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 type="button"
                 variant="outline"
                 className="w-full h-12 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 font-normal justify-start px-4"
-                onClick={() => {
-                  toast({
-                    title: "Em breve",
-                    description: "Login com Google estará disponível em breve.",
+                onClick={async () => {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                      redirectTo: `${window.location.origin}/`,
+                    }
                   });
+                  
+                  if (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao iniciar login com Google. Por favor, tente novamente.",
+                      variant: "destructive"
+                    });
+                  }
                 }}
               >
                 <img 
@@ -201,11 +233,21 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                 type="button"
                 variant="outline"
                 className="w-full h-12 bg-white border-gray-200 hover:bg-gray-50 text-gray-700 font-normal justify-start px-4"
-                onClick={() => {
-                  toast({
-                    title: "Em breve",
-                    description: "Login com Facebook estará disponível em breve.",
+                onClick={async () => {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'facebook',
+                    options: {
+                      redirectTo: `${window.location.origin}/`,
+                    }
                   });
+                  
+                  if (error) {
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao iniciar login com Facebook. Por favor, tente novamente.",
+                      variant: "destructive"
+                    });
+                  }
                 }}
               >
                 <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
