@@ -1,16 +1,27 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import tcasaLogo from "/lovable-uploads/2106fa56-6f57-47da-99f6-4ad2e18592c3.png";
+
 const TermsOfService = () => {
   return <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <img src={tcasaLogo} alt="T-Casa by Theron Engitrade" className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain flex-shrink-0" />
+          </div>
+          <Link to="/">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+          </Link>
+        </div>
+      </header>
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Link to="/">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao Início
-          </Button>
-        </Link>
 
         <Card className="shadow-lg">
           <CardHeader className="border-b border-border/50 bg-gradient-to-r from-primary/5 to-brand-secondary/5">
@@ -133,6 +144,76 @@ const TermsOfService = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-muted py-8 sm:py-12 border-t border-border mt-12">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Info */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <img src={tcasaLogo} alt="T-Casa" className="h-10 w-10" />
+                <div>
+                  <div className="font-bold text-foreground">T-Casa</div>
+                  <div className="text-xs text-muted-foreground">Sistema de Gestão de Condomínios</div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Desenvolvido pela Theron Engitrade, Lda
+              </p>
+            </div>
+
+            {/* Legal Links */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Informações Legais</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    Política de Privacidade
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms-of-service" className="text-muted-foreground hover:text-primary transition-colors">
+                    Termos de Uso
+                  </a>
+                </li>
+                <li>
+                  <a href="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    Política de Cookies
+                  </a>
+                </li>
+                <li>
+                  <a href="/lgpd-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    LGPD & Proteção de Dados
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">Contacto</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Email: info@tcasa.ao</li>
+                <li>Suporte: suporte@tcasa.ao</li>
+                <li>Telefone: +244 933 696 567</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-6 mt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                © 2024 Theron Engitrade. Todos os direitos reservados.
+              </div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <Shield className="h-4 w-4" />
+                <span>Seus dados estão protegidos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>;
 };
 export default TermsOfService;

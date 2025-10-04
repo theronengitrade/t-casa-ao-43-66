@@ -499,7 +499,7 @@ const LandingPage = ({
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>Email: info@tcasa.ao</li>
                 <li>Suporte: suporte@tcasa.ao</li>
-                <li>Telefone: +244 XXX XXX XXX</li>
+                <li>Telefone: +244 933 696 567</li>
               </ul>
             </div>
           </div>

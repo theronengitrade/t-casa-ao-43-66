@@ -289,14 +289,14 @@ const CityViewerDashboard = () => {
   return (
     <div className="min-h-screen bg-background mobile-body-offset">
       {/* Header */}
-      <header className="mobile-fixed-header">
+      <header className="mobile-fixed-header" style={{ backgroundColor: 'hsl(207 53% 34%)' }}>
         <div className="h-14 sm:h-16 flex items-center justify-between px-4 sm:px-6">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 mobile-flex-wrap">
             <div className="min-w-0 flex-1">
-              <h1 className="text-sm sm:text-base font-semibold mobile-header-wrap">
+              <h1 className="text-sm sm:text-base font-semibold mobile-header-wrap text-white">
                 <span className="mobile-header-truncate">Visualizador de Cidades & Condomínios</span>
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mobile-header-wrap">
+              <p className="text-xs sm:text-sm mobile-header-wrap text-white/80">
                 <span className="mobile-header-truncate">
                   Bem-vindo, {profile.first_name} {profile.last_name}
                 </span>
@@ -305,11 +305,11 @@ const CityViewerDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 mobile-flex-wrap">
-            <Badge variant="default" className="hidden sm:flex items-center space-x-1">
+            <Badge variant="default" className="hidden sm:flex items-center space-x-1 bg-white/20 text-white border-white/30">
               <Eye className="h-4 w-4" />
               <span>City Viewer</span>
             </Badge>
-            <Badge variant="default" className="sm:hidden">
+            <Badge variant="default" className="sm:hidden bg-white/20 text-white border-white/30">
               <Eye className="h-3 w-3" />
             </Badge>
             <Button 
@@ -319,11 +319,11 @@ const CityViewerDashboard = () => {
                 title: "Configurações",
                 description: "Funcionalidade de configurações em desenvolvimento."
               })}
-              className="hidden sm:flex touch-target"
+              className="hidden sm:flex touch-target text-white hover:bg-white/10"
             >
               <Settings className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="touch-target">
+            <Button variant="ghost" size="sm" onClick={signOut} className="touch-target text-white hover:bg-white/10">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
