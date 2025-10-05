@@ -363,10 +363,43 @@ export class ReportGenerator {
           head: headRow.length ? [headRow] : undefined,
           body: bodyRows,
           theme: 'grid',
-          headStyles: { fillColor: [244,244,244], textColor: [0,0,0], fontSize: 11, fontStyle: 'bold' },
-          bodyStyles: { fontSize: 11, textColor: [0,0,0] },
+          headStyles: { 
+            fillColor: [244,244,244], 
+            textColor: [0,0,0], 
+            fontSize: 10, 
+            fontStyle: 'bold',
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 3,
+            minCellHeight: 8
+          },
+          bodyStyles: { 
+            fontSize: 9, 
+            textColor: [0,0,0],
+            halign: 'center',
+            valign: 'middle',
+            cellPadding: 3,
+            minCellHeight: 8,
+            overflow: 'linebreak',
+            cellWidth: 'wrap'
+          },
+          columnStyles: {
+            0: { cellWidth: 'auto', halign: 'left' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 'auto' },
+            4: { cellWidth: 'auto' },
+            5: { cellWidth: 'auto' }
+          },
           margin: { left: margin, right: margin, top: 20, bottom: 80 },
-          pageBreak: 'auto'
+          pageBreak: 'auto',
+          tableWidth: 'auto',
+          styles: {
+            overflow: 'linebreak',
+            cellWidth: 'wrap',
+            minCellWidth: 15,
+            fontSize: 9
+          }
         });
         // Update yPosition
         // @ts-ignore
