@@ -49,6 +49,11 @@ const ResidentProfile = ({ profile }: ResidentProfileProps) => {
   const [residentInfo, setResidentInfo] = useState<any>(null);
   const { toast } = useToast();
 
+  // Update avatar when profile changes
+  useEffect(() => {
+    setAvatarUrl(profile?.avatar_url || null);
+  }, [profile?.avatar_url]);
+
   const refreshResidentInfo = async () => {
     try {
       const { data, error } = await supabase
@@ -333,13 +338,13 @@ const ResidentProfile = ({ profile }: ResidentProfileProps) => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Temporarily commented until avatar_url column is added
-      // const { error: updateError } = await supabase
-      //   .from('profiles')
-      //   .update({ avatar_url: publicUrl })
-      //   .eq('id', profile.id);
+      // Update profile with avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id);
 
-      // if (updateError) throw updateError;
+      if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
       toast({

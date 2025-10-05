@@ -44,6 +44,11 @@ const CoordinatorProfile = ({ profile }: CoordinatorProfileProps) => {
   });
   const { toast } = useToast();
 
+  // Update avatar when profile changes
+  useEffect(() => {
+    setAvatarUrl(profile?.avatar_url || null);
+  }, [profile?.avatar_url]);
+
   // Buscar email do usuário autenticado
   useEffect(() => {
     const fetchUserEmail = async () => {
@@ -140,13 +145,13 @@ const CoordinatorProfile = ({ profile }: CoordinatorProfileProps) => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Temporarily commented until avatar_url column is added
-      // const { error: updateError } = await supabase
-      //   .from('profiles')
-      //   .update({ avatar_url: publicUrl })
-      //   .eq('id', profile.id);
+      // Update profile with avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id);
 
-      // if (updateError) throw updateError;
+      if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
       toast({

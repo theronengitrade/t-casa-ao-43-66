@@ -44,6 +44,7 @@ const SuperAdminProfile = () => {
         phone: profile.phone || '',
         email: user.email || ''
       });
+      setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile, user]);
 
@@ -156,13 +157,13 @@ const SuperAdminProfile = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Temporarily commented until avatar_url column is added
-      // const { error: updateError } = await supabase
-      //   .from('profiles')
-      //   .update({ avatar_url: publicUrl })
-      //   .eq('user_id', user?.id);
+      // Update profile with avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user?.id);
 
-      // if (updateError) throw updateError;
+      if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
       toast({

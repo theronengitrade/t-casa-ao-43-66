@@ -15,6 +15,7 @@ interface Profile {
   apartment_number: string | null;
   must_change_password: boolean;
   coordination_staff_id: string | null;
+  avatar_url: string | null;
 }
 
 interface AuthContextType {

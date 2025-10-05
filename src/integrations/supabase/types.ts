@@ -1136,6 +1136,7 @@ export type Database = {
       profiles: {
         Row: {
           apartment_number: string | null
+          avatar_url: string | null
           condominium_id: string | null
           coordination_staff_id: string | null
           created_at: string
@@ -1151,6 +1152,7 @@ export type Database = {
         }
         Insert: {
           apartment_number?: string | null
+          avatar_url?: string | null
           condominium_id?: string | null
           coordination_staff_id?: string | null
           created_at?: string
@@ -1166,6 +1168,7 @@ export type Database = {
         }
         Update: {
           apartment_number?: string | null
+          avatar_url?: string | null
           condominium_id?: string | null
           coordination_staff_id?: string | null
           created_at?: string
