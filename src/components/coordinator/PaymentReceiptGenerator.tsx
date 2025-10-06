@@ -35,7 +35,7 @@ export function PaymentReceiptGenerator() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [condominiumInfo, setCondominiumInfo] = useState({
     name: "",
     address: "",
@@ -95,7 +95,7 @@ export function PaymentReceiptGenerator() {
         .eq('status', 'paid')
         .not('payment_date', 'is', null);
 
-      if (selectedMonth) {
+      if (selectedMonth && selectedMonth !== 'all') {
         query = query.eq('reference_month', selectedMonth);
       }
 
@@ -199,7 +199,7 @@ export function PaymentReceiptGenerator() {
                   <SelectValue placeholder="Todos os meses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os meses</SelectItem>
+                  <SelectItem value="all">Todos os meses</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => {
                     const date = new Date(new Date().getFullYear(), i, 1);
                     const value = format(date, 'yyyy-MM-dd');

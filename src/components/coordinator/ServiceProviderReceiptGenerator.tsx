@@ -35,8 +35,8 @@ export function ServiceProviderReceiptGenerator() {
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
   const [condominiumInfo, setCondominiumInfo] = useState({
     name: "",
     address: "",
@@ -93,11 +93,11 @@ export function ServiceProviderReceiptGenerator() {
         .eq('condominium_id', profile.condominium_id)
         .not('service_provider_id', 'is', null);
 
-      if (selectedCategory) {
+      if (selectedCategory && selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
 
-      if (selectedMonth) {
+      if (selectedMonth && selectedMonth !== 'all') {
         const startDate = new Date(selectedMonth);
         const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
         query = query
@@ -233,7 +233,7 @@ export function ServiceProviderReceiptGenerator() {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category.toLowerCase()}>
                       {category}
@@ -249,7 +249,7 @@ export function ServiceProviderReceiptGenerator() {
                   <SelectValue placeholder="Todos os meses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os meses</SelectItem>
+                  <SelectItem value="all">Todos os meses</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => {
                     const date = new Date(new Date().getFullYear(), i, 1);
                     const value = format(date, 'yyyy-MM-dd');
