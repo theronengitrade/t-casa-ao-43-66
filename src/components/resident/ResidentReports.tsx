@@ -20,11 +20,14 @@ import {
   CheckCircle,
   Receipt,
   FileCheck,
-  Building
+  Building,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useRemanescenteAnual } from "@/hooks/useRemanescenteAnual";
+import { PaymentReceiptGenerator } from "@/components/coordinator/PaymentReceiptGenerator";
+import { ServiceProviderReceiptGenerator } from "@/components/coordinator/ServiceProviderReceiptGenerator";
 
 interface ReportStats {
   residents: number;
@@ -53,6 +56,7 @@ export default function ResidentReports({ profile, condominiumInfo }: ResidentRe
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("current_month");
+  const [activeView, setActiveView] = useState<'main' | 'service-receipts' | 'resident-receipts'>('main');
   const [reportData, setReportData] = useState<ReportStats>({
     residents: 0,
     visitors: 0,
@@ -513,6 +517,39 @@ export default function ResidentReports({ profile, condominiumInfo }: ResidentRe
     }
   ];
 
+  // Handle view switching
+  if (activeView === 'service-receipts') {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => setActiveView('main')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar ao Centro de Relatórios
+        </Button>
+        <ServiceProviderReceiptGenerator />
+      </div>
+    );
+  }
+
+  if (activeView === 'resident-receipts') {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => setActiveView('main')}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar ao Centro de Relatórios
+        </Button>
+        <PaymentReceiptGenerator />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -704,11 +741,8 @@ export default function ResidentReports({ profile, condominiumInfo }: ResidentRe
                     </p>
                     <Button 
                       variant="outline" 
-                      className="w-full"
-                      onClick={() => toast({
-                        title: "Em Desenvolvimento",
-                        description: "Esta funcionalidade será disponibilizada em breve."
-                      })}
+                      className="w-full brand-glow"
+                      onClick={() => setActiveView('service-receipts')}
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Acessar Prestadores
@@ -729,11 +763,8 @@ export default function ResidentReports({ profile, condominiumInfo }: ResidentRe
                     </p>
                     <Button 
                       variant="outline" 
-                      className="w-full"
-                      onClick={() => toast({
-                        title: "Em Desenvolvimento", 
-                        description: "Esta funcionalidade será disponibilizada em breve."
-                      })}
+                      className="w-full brand-glow"
+                      onClick={() => setActiveView('resident-receipts')}
                     >
                       <Users className="h-4 w-4 mr-2" />
                       Acessar Residentes
