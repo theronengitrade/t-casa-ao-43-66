@@ -282,10 +282,148 @@ export class ReportGenerator {
   }
 
   private htmlToJsPDF(html: string, footer: { docId: string; hash: string; verificationUrl: string; version: string; qr: string; issuedAt: string }): void {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    
-    // Reset PDF
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Reset PDF
+      this.doc = new jsPDF();
+      
+      let yPosition = 20;
+      const pageWidth = this.doc.internal.pageSize.width;
+      const pageHeight = this.doc.internal.pageSize.height;
+      const margin = 20;
+      
+      // Header
+      const headerH1 = doc.querySelector('header h1')?.textContent || '';
+      const headerP = doc.querySelector('header p')?.textContent || '';
+      const headerH2 = doc.querySelector('header h2')?.textContent || '';
+      const metaDiv = doc.querySelector('.meta')?.textContent || '';
+      
+      // If parsing failed, try manual extraction
+      if (!headerH1 && html.includes('<header>')) {
+        console.warn('DOM parsing failed, using fallback method');
+        this.htmlToJsPDFFallback(html, footer);
+        return;
+      }
+      
+      this.doc.setFontSize(20);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(headerH1, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(headerP, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 12;
+
+      if (headerH2) {
+        this.doc.setFontSize(16);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.setTextColor(220, 53, 69);
+        this.doc.text(headerH2, pageWidth / 2, yPosition, { align: 'center' });
+        this.doc.setTextColor(0, 0, 0);
+        yPosition += 12;
+      }
+      
+      this.doc.setFontSize(11);
+      this.doc.setTextColor(108, 117, 125);
+      this.doc.text(metaDiv, pageWidth / 2, yPosition, { align: 'center' });
+      this.doc.setTextColor(0,0,0);
+      yPosition += 20;
+      
+      // Sections: in document order
+      const sections = doc.querySelectorAll('.section-title, .stats, table');
+      sections.forEach((section) => {
+        // Leave space for footer
+        if (yPosition > pageHeight - 80) {
+          this.doc.addPage();
+          yPosition = 20;
+        }
+        
+        if (section.classList.contains('section-title')) {
+          this.doc.setFontSize(14);
+          this.doc.setFont('helvetica', 'bold');
+          this.doc.setTextColor(41, 128, 185);
+          this.doc.text(section.textContent || '', margin, yPosition);
+          this.doc.setTextColor(0,0,0);
+          yPosition += 10;
+        } else if (section.classList.contains('stats')) {
+          this.doc.setFontSize(12);
+          this.doc.setFont('helvetica', 'normal');
+          const stats = Array.from(section.querySelectorAll('p')).map(p => p.textContent?.trim() || '').filter(Boolean);
+          stats.forEach((stat) => {
+            if (yPosition > pageHeight - 80) {
+              this.doc.addPage();
+              yPosition = 20;
+            }
+            this.doc.text(stat, margin, yPosition);
+            yPosition += 7;
+          });
+          yPosition += 6;
+        } else if (section.tagName.toLowerCase() === 'table') {
+          // Build head and body for autoTable
+          const headRow = Array.from(section.querySelectorAll('thead th')).map(th => th.textContent || '');
+          const bodyRows = Array.from(section.querySelectorAll('tbody tr')).map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent || ''));
+          
+          autoTable(this.doc, {
+            startY: yPosition,
+            head: headRow.length ? [headRow] : undefined,
+            body: bodyRows,
+            theme: 'grid',
+            headStyles: { 
+              fillColor: [244,244,244], 
+              textColor: [0,0,0], 
+              fontSize: 10, 
+              fontStyle: 'bold',
+              halign: 'center',
+              valign: 'middle',
+              cellPadding: 3,
+              minCellHeight: 8
+            },
+            bodyStyles: { 
+              fontSize: 9, 
+              textColor: [0,0,0],
+              halign: 'center',
+              valign: 'middle',
+              cellPadding: 3,
+              minCellHeight: 8,
+              overflow: 'linebreak',
+              cellWidth: 'wrap'
+            },
+            columnStyles: {
+              0: { cellWidth: 'auto', halign: 'left' },
+              1: { cellWidth: 'auto' },
+              2: { cellWidth: 'auto' },
+              3: { cellWidth: 'auto' },
+              4: { cellWidth: 'auto' },
+              5: { cellWidth: 'auto' }
+            },
+            margin: { left: margin, right: margin, top: 20, bottom: 80 },
+            pageBreak: 'auto',
+            tableWidth: 'auto',
+            styles: {
+              overflow: 'linebreak',
+              cellWidth: 'wrap',
+              minCellWidth: 15,
+              fontSize: 9
+            }
+          });
+          // Update yPosition
+          // @ts-ignore
+          yPosition = (this.doc as any).lastAutoTable?.finalY ? (this.doc as any).lastAutoTable.finalY + 10 : yPosition + 60;
+        }
+      });
+      
+      this.addFooter(footer, pageHeight, pageWidth);
+    } catch (error) {
+      console.error('Error in htmlToJsPDF, using fallback:', error);
+      this.htmlToJsPDFFallback(html, footer);
+    }
+  }
+
+  private htmlToJsPDFFallback(html: string, footer: { docId: string; hash: string; verificationUrl: string; version: string; qr: string; issuedAt: string }): void {
+    // Fallback method that extracts data using regex
     this.doc = new jsPDF();
     
     let yPosition = 20;
@@ -293,22 +431,28 @@ export class ReportGenerator {
     const pageHeight = this.doc.internal.pageSize.height;
     const margin = 20;
     
-    // Header
-    const headerH1 = doc.querySelector('header h1')?.textContent || '';
-    const headerP = doc.querySelector('header p')?.textContent || '';
-    const headerH2 = doc.querySelector('header h2')?.textContent || '';
-    const metaDiv = doc.querySelector('.meta')?.textContent || '';
+    // Extract header info using regex
+    const h1Match = html.match(/<h1>(.*?)<\/h1>/);
+    const pMatch = html.match(/<p>Condomínio: (.*?)<\/p>/);
+    const h2Match = html.match(/<h2[^>]*>(.*?)<\/h2>/);
     
+    const headerH1 = h1Match ? h1Match[1] : 'T-CASA — Relatório';
+    const headerP = pMatch ? pMatch[1] : '';
+    const headerH2 = h2Match ? h2Match[1] : '';
+    
+    // Render header
     this.doc.setFontSize(20);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(headerH1, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 15;
     
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.text(headerP, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 12;
-
+    if (headerP) {
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(headerP, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 12;
+    }
+    
     if (headerH2) {
       this.doc.setFontSize(16);
       this.doc.setFont('helvetica', 'bold');
@@ -318,95 +462,53 @@ export class ReportGenerator {
       yPosition += 12;
     }
     
-    this.doc.setFontSize(11);
-    this.doc.setTextColor(108, 117, 125);
-    this.doc.text(metaDiv, pageWidth / 2, yPosition, { align: 'center' });
-    this.doc.setTextColor(0,0,0);
-    yPosition += 20;
+    yPosition += 10;
     
-    // Sections: in document order
-    const sections = doc.querySelectorAll('.section-title, .stats, table');
-    sections.forEach((section) => {
-      // Leave space for footer
-      if (yPosition > pageHeight - 80) {
-        this.doc.addPage();
-        yPosition = 20;
-      }
+    // Extract section title
+    const sectionMatch = html.match(/<div class="section-title">(.*?)<\/div>/);
+    if (sectionMatch) {
+      this.doc.setFontSize(14);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(41, 128, 185);
+      this.doc.text(sectionMatch[1], margin, yPosition);
+      this.doc.setTextColor(0, 0, 0);
+      yPosition += 10;
+    }
+    
+    // Extract table data
+    const tableMatch = html.match(/<table>(.*?)<\/table>/s);
+    if (tableMatch) {
+      const trMatches = [...tableMatch[1].matchAll(/<tr>(.*?)<\/tr>/gs)];
+      const rows = trMatches.map(trMatch => {
+        const tdMatches = [...trMatch[1].matchAll(/<td[^>]*>(.*?)<\/td>/gs)];
+        return tdMatches.map(tdMatch => tdMatch[1].replace(/<[^>]*>/g, '').trim());
+      });
       
-      if (section.classList.contains('section-title')) {
-        this.doc.setFontSize(14);
-        this.doc.setFont('helvetica', 'bold');
-        this.doc.setTextColor(41, 128, 185);
-        this.doc.text(section.textContent || '', margin, yPosition);
-        this.doc.setTextColor(0,0,0);
-        yPosition += 10;
-      } else if (section.classList.contains('stats')) {
-        this.doc.setFontSize(12);
-        this.doc.setFont('helvetica', 'normal');
-        const stats = Array.from(section.querySelectorAll('p')).map(p => p.textContent?.trim() || '').filter(Boolean);
-        stats.forEach((stat) => {
-          if (yPosition > pageHeight - 80) {
-            this.doc.addPage();
-            yPosition = 20;
-          }
-          this.doc.text(stat, margin, yPosition);
-          yPosition += 7;
-        });
-        yPosition += 6;
-      } else if (section.tagName.toLowerCase() === 'table') {
-        // Build head and body for autoTable
-        const headRow = Array.from(section.querySelectorAll('thead th')).map(th => th.textContent || '');
-        const bodyRows = Array.from(section.querySelectorAll('tbody tr')).map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent || ''));
-        
+      if (rows.length > 0) {
         autoTable(this.doc, {
           startY: yPosition,
-          head: headRow.length ? [headRow] : undefined,
-          body: bodyRows,
+          body: rows,
           theme: 'grid',
-          headStyles: { 
-            fillColor: [244,244,244], 
-            textColor: [0,0,0], 
-            fontSize: 10, 
-            fontStyle: 'bold',
-            halign: 'center',
-            valign: 'middle',
-            cellPadding: 3,
-            minCellHeight: 8
-          },
-          bodyStyles: { 
-            fontSize: 9, 
-            textColor: [0,0,0],
-            halign: 'center',
-            valign: 'middle',
-            cellPadding: 3,
-            minCellHeight: 8,
-            overflow: 'linebreak',
-            cellWidth: 'wrap'
+          bodyStyles: {
+            fontSize: 10,
+            textColor: [0, 0, 0],
+            cellPadding: 4
           },
           columnStyles: {
-            0: { cellWidth: 'auto', halign: 'left' },
-            1: { cellWidth: 'auto' },
-            2: { cellWidth: 'auto' },
-            3: { cellWidth: 'auto' },
-            4: { cellWidth: 'auto' },
-            5: { cellWidth: 'auto' }
+            0: { cellWidth: 'auto', halign: 'left', fontStyle: 'bold' },
+            1: { cellWidth: 'auto', halign: 'left' }
           },
-          margin: { left: margin, right: margin, top: 20, bottom: 80 },
-          pageBreak: 'auto',
-          tableWidth: 'auto',
-          styles: {
-            overflow: 'linebreak',
-            cellWidth: 'wrap',
-            minCellWidth: 15,
-            fontSize: 9
-          }
+          margin: { left: margin, right: margin }
         });
-        // Update yPosition
         // @ts-ignore
-        yPosition = (this.doc as any).lastAutoTable?.finalY ? (this.doc as any).lastAutoTable.finalY + 10 : yPosition + 60;
+        yPosition = (this.doc as any).lastAutoTable?.finalY || yPosition + 60;
       }
-    });
+    }
     
+    this.addFooter(footer, pageHeight, pageWidth);
+  }
+
+  private addFooter(footer: { docId: string; hash: string; verificationUrl: string; version: string; qr: string; issuedAt: string }, pageHeight: number, pageWidth: number): void {
     // Footer on last page with QR image
     const footerBoxTop = pageHeight - 60;
     this.doc.setFillColor(248, 249, 250);
