@@ -80,19 +80,19 @@ export function DocumentGenerator({
 
       switch (type) {
         case 'service_receipt':
-          reportGenerator.generateServiceProviderReceipt(receiptData);
+          await reportGenerator.generateServiceProviderReceipt(receiptData);
           filename = `recibo-prestador-${receiptNumber}.pdf`;
           documentTitle = 'Recibo de Pagamento';
           break;
         
         case 'resident_receipt':
-          reportGenerator.generateResidentReceipt(receiptData);
+          await reportGenerator.generateResidentReceipt(receiptData);
           filename = `comprovativo-residente-${receiptNumber}.pdf`;
           documentTitle = 'Comprovativo de Pagamento';
           break;
         
         case 'service_acceptance':
-          reportGenerator.generateServiceAcceptanceReport(receiptData);
+          await reportGenerator.generateServiceAcceptanceReport(receiptData);
           filename = `termo-aceitacao-${receiptNumber}.pdf`;
           documentTitle = 'Termo de Aceitação';
           break;
