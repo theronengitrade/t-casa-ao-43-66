@@ -141,9 +141,11 @@ export const usePayrollManagement = () => {
         updates.net_salary = netSalary;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { employee: _employee, ...dbUpdates } = updates as Partial<PayrollEntry> & { employee?: unknown };
       const { error } = await supabase
         .from('payroll_entries')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id);
 
       if (error) throw error;
